@@ -906,9 +906,337 @@ function setupTaskTools() {
   heading.appendChild(tools);
 }
 
+// ===== CAMPUSFLOW PLUS FEATURES =====
+
+function setupCampusFlowPlus() {
+  const taskList = document.getElementById("taskList");
+  if (!taskList || document.getElementById("cfPlusPanel")) return;
+
+  const readStore = (key, fallback) => {
+    try {
+      return JSON.parse(localStorage.getItem(key)) ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const saveStore = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  };
+
+  let profile = readStore("cf_student_profile", { name: "Student" });
+  let notes = readStore("cf_assignment_notes", {});
+  let earned = readStore("cf_earned_tasks", []);
+  let studyDates = readStore("cf_study_dates", []);
+
+  const today = () => new Date().toLocaleDateString("en-CA");
+  const getTask = (row) =>
+    tasks.find(t => row.innerText.includes(t.title));
+
+  const panel = document.createElement("section");
+  panel.id = "cfPlusPanel";
+  panel.className = "cf-plus-panel";
+
+  panel.innerHTML = `
+    <div class="cf-profile-card">
+      <div>
+        <p class="cf-plus-eyebrow">YOUR STUDY SPACE</p>
+        <h2 id="cfWelcome">Hey, ${profile.name} 👋</h2>
+        <p>Small steps every day lead to big results.</p>
+      </div>
+      <button id="cfEditProfile" class="cf-plus-button">Edit profile</button>
+      <div class="cf-profile-stats">
+        <div><strong id="cfXP">0</strong><span>Total XP</span></div>
+        <div><strong id="cfStreak">0</strong><span>Day streak 🔥</span></div>
+        <div><strong id="cfBadges">0</strong><span>Badges 🏅</span></div>
+      </div>
+    </div>
+
+    <div class="cf-plus-card">
+      <h3>📊 Subject-wise Analytics</h3>
+      <p class="cf-plus-muted">Your assignment progress by subject</p>
+      <div id="cfSubjectChart"></div>
+    </div>
+
+    <div class="cf-plus-card">
+      <h3>🔎 Advanced Filters</h3>
+      <div class="cf-filter-grid">
+        <select id="cfFilterSubject">
+          <option value="all">All subjects</option>
+        </select>
+        <select id="cfFilterPriority">
+          <option value="all">All priorities</option>
+          <option value="high">High priority</option>
+          <option value="medium">Medium priority</option>
+          <option value="low">Low priority</option>
+        </select>
+        <select id="cfFilterStatus">
+          <option value="all">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="overdue">Overdue</option>
+        </select>
+      </div>
+      <button id="cfResetFilters" class="cf-plus-button">Reset filters</button>
+    </div>
+  `;
+
+  taskList.parentElement.insertBefore(panel, taskList);
+
+  // Personalized student profile
+  document.getElementById("cfEditProfile").addEventListener("click", () => {
+    const name = prompt("What should CampusFlow call you?", profile.name);
+    if (name && name.trim()) {
+      profile.name = name.trim();
+      saveStore("cf_student_profile", profile);
+      updatePlusDashboard();
+    }
+  });
+
+  // Populate subject filter
+  function updateSubjectOptions() {
+    const select = document.getElementById("cfFilterSubject");
+    const previous = select.value;
+    const subjects = [...new Set(tasks.map(t => t.subject).filter(Boolean))];
+
+    select.innerHTML = '<option value="all">All subjects</option>';
+    subjects.forEach(subject => {
+      const option = document.createElement("option");
+      option.value = subject;
+      option.textContent = subject;
+      select.appendChild(option);
+    });
+
+    select.value = subjects.includes(previous) ? previous : "all";
+  }
+
+  // Advanced filtering
+  function applyPlusFilters() {
+    const subject = document.getElementById("cfFilterSubject").value;
+    const priority = document.getElementById("cfFilterPriority").value;
+    const status = document.getElementById("cfFilterStatus").value;
+
+    [...taskList.children].forEach(row => {
+      const task = getTask(row);
+      if (!task) return;
+
+      const matchesSubject = subject === "all" || task.subject === subject;
+      const matchesPriority = priority === "all" ||
+        String(task.priority).toLowerCase() === priority;
+
+      const isOverdue = !task.done && task.due &&
+        new Date(task.due + "T23:59:59") < new Date();
+
+      const matchesStatus = status === "all" ||
+        (status === "completed" && task.done) ||
+        (status === "pending" && !task.done && !isOverdue) ||
+        (status === "overdue" && isOverdue);
+
+      row.style.display =
+        matchesSubject && matchesPriority && matchesStatus ? "" : "none";
+    });
+  }
+
+  ["cfFilterSubject", "cfFilterPriority", "cfFilterStatus"].forEach(id => {
+    document.getElementById(id).addEventListener("change", applyPlusFilters);
+  });
+
+  document.getElementById("cfResetFilters").addEventListener("click", () => {
+    document.getElementById("cfFilterSubject").value = "all";
+    document.getElementById("cfFilterPriority").value = "all";
+    document.getElementById("cfFilterStatus").value = "all";
+    applyPlusFilters();
+  });
+
+  // Notes and resource links for each assignment
+  function addNotesButtons() {
+    [...taskList.children].forEach(row => {
+      const task = getTask(row);
+      if (!task || row.querySelector(".cf-notes-button")) return;
+
+      const button = document.createElement("button");
+      button.className = "cf-notes-button";
+      button.textContent = "📝 Notes";
+      button.type = "button";
+
+      button.addEventListener("click", () => {
+        const old = notes[task.id] || { text: "", url: "" };
+        const text = prompt("Add assignment notes:", old.text);
+        if (text === null) return;
+
+        const url = prompt("Add a resource URL (optional):", old.url);
+        if (url === null) return;
+
+        notes[task.id] = { text, url };
+        saveStore("cf_assignment_notes", notes);
+
+        button.textContent = text || url ? "📝 Saved" : "📝 Notes";
+
+        if (url.trim()) {
+          try {
+            const parsed = new URL(url);
+            if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+              showToast("Notes saved! Open the Notes button to view your link.");
+            } else {
+              showToast("Notes saved. Use an http or https link for resources.");
+            }
+          } catch {
+            showToast("Notes saved. The resource URL doesn't look valid yet.");
+          }
+        } else {
+          showToast("Assignment notes saved!");
+        }
+      });
+
+      row.appendChild(button);
+
+      if (notes[task.id] &&
+          (notes[task.id].text || notes[task.id].url)) {
+        button.textContent = "📝 Saved";
+      }
+    });
+  }
+
+  // XP and study streaks
+  function recordCompletions() {
+    tasks.forEach(task => {
+      if (task.done && !earned.includes(String(task.id))) {
+        earned.push(String(task.id));
+      }
+    });
+    saveStore("cf_earned_tasks", earned);
+  }
+
+  // Capture completion before the existing checkbox handler rerenders tasks
+  taskList.addEventListener("change", event => {
+    if (!event.target.matches('input[type="checkbox"]')) return;
+
+    const row = event.target.closest("*");
+    const taskRow = event.target.parentElement;
+    const task = getTask(taskRow) || getTask(row);
+
+    if (event.target.checked) {
+      const completedTask = task || tasks.find(t =>
+        [...taskList.children].some(r =>
+          r.innerText.includes(t.title) && r.contains(event.target)
+        )
+      );
+
+      if (completedTask) {
+        const id = String(completedTask.id);
+        if (!earned.includes(id)) earned.push(id);
+        if (!studyDates.includes(today())) studyDates.push(today());
+
+        saveStore("cf_earned_tasks", earned);
+        saveStore("cf_study_dates", studyDates);
+      }
+    }
+
+    setTimeout(updatePlusDashboard, 0);
+  }, true);
+
+  function calculateStreak() {
+    const dates = new Set(studyDates);
+    let count = 0;
+    const date = new Date();
+
+    // A streak can continue if the student last studied yesterday.
+    if (!dates.has(today())) date.setDate(date.getDate() - 1);
+
+    while (dates.has(date.toLocaleDateString("en-CA"))) {
+      count++;
+      date.setDate(date.getDate() - 1);
+    }
+    return count;
+  }
+
+  function updatePlusDashboard() {
+    recordCompletions();
+
+    document.getElementById("cfWelcome").textContent =
+      `Hey, ${profile.name} 👋`;
+
+    const xp = earned.length * 25;
+    const streak = calculateStreak();
+    const completed = tasks.filter(t => t.done).length;
+
+    const badgeCount = [
+      completed >= 1,
+      completed >= 5,
+      completed >= 10,
+      streak >= 3,
+      streak >= 7,
+      xp >= 500
+    ].filter(Boolean).length;
+
+    document.getElementById("cfXP").textContent = xp;
+    document.getElementById("cfStreak").textContent = streak;
+    document.getElementById("cfBadges").textContent = badgeCount;
+
+    const chart = document.getElementById("cfSubjectChart");
+    const groups = {};
+
+    tasks.forEach(task => {
+      const subject = task.subject || "Other";
+      if (!groups[subject]) groups[subject] = { total: 0, completed: 0 };
+      groups[subject].total++;
+      if (task.done) groups[subject].completed++;
+    });
+
+    chart.innerHTML = "";
+
+    Object.entries(groups).forEach(([subject, data]) => {
+      const percent = data.total
+        ? Math.round(data.completed / data.total * 100) : 0;
+
+      const item = document.createElement("div");
+      item.className = "cf-subject-row";
+
+      const heading = document.createElement("div");
+      heading.className = "cf-subject-heading";
+
+      const name = document.createElement("span");
+      name.textContent = subject;
+
+      const count = document.createElement("span");
+      count.textContent = `${data.completed}/${data.total} · ${percent}%`;
+
+      heading.append(name, count);
+
+      const track = document.createElement("div");
+      track.className = "cf-chart-track";
+
+      const bar = document.createElement("div");
+      bar.className = "cf-chart-bar";
+      bar.style.width = percent + "%";
+
+      track.appendChild(bar);
+      item.append(heading, track);
+      chart.appendChild(item);
+    });
+
+    if (!Object.keys(groups).length) {
+      chart.textContent = "Add assignments to see your subject analytics.";
+    }
+
+    updateSubjectOptions();
+    applyPlusFilters();
+    addNotesButtons();
+  }
+
+  // Watch the existing renderer when it refreshes the assignment list
+  const observer = new MutationObserver(() => {
+    addNotesButtons();
+    applyPlusFilters();
+  });
+
+  observer.observe(taskList, { childList: true, subtree: true });
+
+  updatePlusDashboard();
+}
 
 setupAdvancedUI();
 setupProductivityHub();
 setupTaskTools();
+setupCampusFlowPlus();
 render();
-
