@@ -727,3 +727,88 @@ body.dark-mode .empty {
     bottom: 12px;
   }
 }
+
+
+/* Assignment action buttons */
+.cf-task-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.cf-task-actions button,
+.cf-task-tools button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.cf-task-actions button:hover,
+.cf-task-tools button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(70, 45, 100, .12);
+}
+
+.cf-edit-btn,
+.cf-export-btn {
+  color: #6541a5;
+  background: #f0e9ff;
+  border-color: #e0d2ff !important;
+}
+
+.cf-delete-btn,
+.cf-clear-btn {
+  color: #b33b54;
+  background: #fff0f2;
+  border-color: #ffd9df !important;
+}
+
+.cf-task-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cf-export-btn,
+.cf-clear-btn {
+  padding: 10px 14px !important;
+}
+
+body.dark-mode .cf-edit-btn,
+body.dark-mode .cf-export-btn {
+  color: #e2d3ff;
+  background: #3b2d53;
+  border-color: #58436f !important;
+}
+
+body.dark-mode .cf-delete-btn,
+body.dark-mode .cf-clear-btn {
+  color: #ffc3ce;
+  background: #492b3a;
+  border-color: #684052 !important;
+}
+
+@media (max-width: 700px) {
+  .cf-task-actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 28px;
+  }
+
+  .cf-task-tools {
+    width: 100%;
+  }
+
+  .cf-task-tools button {
+    flex: 1;
+  }
+}
