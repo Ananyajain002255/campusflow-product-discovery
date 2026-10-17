@@ -812,3 +812,363 @@ body.dark-mode .cf-clear-btn {
     flex: 1;
   }
 }
+
+
+/* ===== CampusFlow Productivity Hub ===== */
+
+.cf-productivity-hub {
+  margin: 26px 0;
+  color: #302442;
+}
+
+.cf-hub-heading {
+  margin-bottom: 20px;
+}
+
+.cf-hub-heading h2 {
+  margin: 0 0 8px;
+  font-size: clamp(23px, 3vw, 30px);
+}
+
+.cf-hub-heading > p:last-child {
+  color: #80738f;
+  margin-top: 0;
+}
+
+.cf-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cf-hub-card {
+  min-width: 0;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid #e8def8;
+  background: linear-gradient(145deg, #fff, #faf7ff);
+  box-shadow: 0 9px 28px rgba(76, 47, 120, .06);
+}
+
+.cf-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cf-card-heading > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cf-hub-card h3 {
+  margin: 12px 0;
+  font-size: 19px;
+}
+
+.cf-card-heading h3 {
+  margin: 0;
+}
+
+.cf-feature-icon {
+  font-size: 25px;
+}
+
+.cf-muted {
+  color: #847890;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.cf-calendar-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.cf-calendar-nav button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e3d8f7;
+  border-radius: 9px;
+  background: #f2ebff;
+  color: #7046b5;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+#cfCalendarTitle {
+  margin: 20px 0 14px;
+  font-size: 15px;
+}
+
+.cf-calendar-week,
+.cf-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  text-align: center;
+}
+
+.cf-calendar-week {
+  margin-bottom: 8px;
+  color: #92859f;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cf-calendar-day {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #f5f0fc;
+  color: #453655;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cf-calendar-day:hover {
+  border-color: #b9a0e8;
+}
+
+.cf-calendar-day.cf-calendar-today {
+  outline: 2px solid #aa8be7;
+}
+
+.cf-calendar-day.cf-calendar-selected {
+  background: #7953bd;
+  color: white;
+}
+
+.cf-calendar-day.cf-calendar-has-task:not(.cf-calendar-selected)::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8456c9;
+  bottom: 4px;
+  left: calc(50% - 2.5px);
+}
+
+.cf-calendar-day.cf-calendar-overdue:not(.cf-calendar-selected)::after {
+  background: #d84d68;
+}
+
+.cf-calendar-blank {
+  aspect-ratio: 1;
+}
+
+.cf-selected-date {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e9e0f6;
+}
+
+#cfSelectedDateLabel {
+  font-size: 13px;
+}
+
+.cf-calendar-task {
+  margin: 10px 0 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.cf-timer-display {
+  margin: 22px 0;
+  text-align: center;
+  color: #7650b9;
+  font-size: clamp(42px, 7vw, 58px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+}
+
+.cf-timer-modes,
+.cf-timer-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cf-timer-modes button {
+  border: 1px solid #e4d8f6;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #f7f2ff;
+  color: #6f5a87;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cf-timer-modes button.active {
+  background: #7953bd;
+  color: white;
+}
+
+.cf-primary-btn,
+.cf-secondary-btn {
+  border: 1px solid transparent;
+  border-radius: 11px;
+  padding: 11px 15px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cf-primary-btn {
+  background: #7953bd;
+  color: white;
+}
+
+.cf-primary-btn:hover {
+  background: #6541a5;
+}
+
+.cf-secondary-btn {
+  background: #f1eaff;
+  color: #6541a5;
+  border-color: #e1d3f7;
+}
+
+.cf-timer-actions {
+  margin-top: 16px;
+}
+
+.cf-session-count {
+  margin-top: 18px;
+  text-align: center;
+  color: #82738e;
+  font-size: 12px;
+}
+
+.cf-goal-label,
+.cf-import-label {
+  display: block;
+  margin: 20px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cf-goal-controls {
+  display: flex;
+  gap: 9px;
+}
+
+.cf-goal-controls input {
+  width: 85px;
+  min-width: 0;
+  border: 1px solid #e1d5f2;
+  border-radius: 10px;
+  padding: 10px;
+  background: white;
+  color: #352747;
+}
+
+.cf-goal-track {
+  height: 10px;
+  margin-top: 24px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #e9e0f6;
+}
+
+#cfGoalBar {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b49af1, #7953bd);
+  transition: width .3s ease;
+}
+
+.cf-goal-text {
+  color: #7650b9;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cf-backup-card > .cf-primary-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+
+#cfImportFile {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-size: 12px;
+}
+
+.cf-backup-note {
+  color: #8a7e95;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+body.dark-mode .cf-hub-card {
+  background: linear-gradient(145deg, #282039, #211a30);
+  color: #f3edff;
+  border-color: #453654;
+}
+
+body.dark-mode .cf-hub-heading h2 {
+  color: #f3edff;
+}
+
+body.dark-mode .cf-hub-heading > p:last-child,
+body.dark-mode .cf-muted,
+body.dark-mode .cf-session-count,
+body.dark-mode .cf-backup-note {
+  color: #c0b4d4;
+}
+
+body.dark-mode .cf-calendar-day {
+  background: #352a46;
+  color: #f3edff;
+}
+
+body.dark-mode .cf-calendar-day.cf-calendar-selected {
+  background: #7953bd;
+}
+
+body.dark-mode .cf-calendar-nav button,
+body.dark-mode .cf-timer-modes button,
+body.dark-mode .cf-secondary-btn {
+  background: #3a2c4e;
+  color: #e7d9ff;
+  border-color: #57446d;
+}
+
+body.dark-mode .cf-timer-modes button.active,
+body.dark-mode .cf-primary-btn {
+  background: #7953bd;
+  color: white;
+}
+
+body.dark-mode .cf-goal-controls input {
+  background: #302641;
+  color: #f3edff;
+  border-color: #493b5d;
+}
+
+body.dark-mode .cf-selected-date {
+  border-color: #493b5d;
+}
+
+@media (max-width: 700px) {
+  .cf-hub-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cf-hub-card {
+    padding: 18px;
+  }
+}
