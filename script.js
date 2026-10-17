@@ -1,4 +1,3 @@
-
 const $ = id => document.getElementById(id);
 
 const today = new Date();
@@ -345,6 +344,7 @@ function render() {
   visibleTasks.forEach(task => {
     const row = document.createElement("div");
     row.className = "task" + (task.done ? " done" : "");
+    row.dataset.taskId = String(task.id);
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -1349,3 +1349,251 @@ function launchConfetti() {
     setTimeout(() => piece.remove(), 2500);
   }
 }
+
+/* ===== CAMPUSFLOW SIGNATURE EXPERIENCE =====
+   Add-on layer: premium daily briefing, mood check-in, weekly challenge,
+   focus mode, rotating study prompts and keyboard shortcuts.
+   Works with the existing CampusFlow script and does not replace task logic.
+*/
+(function setupCampusFlowSignature() {
+  if (window.__campusFlowSignatureLoaded) return;
+  window.__campusFlowSignatureLoaded = true;
+
+  const cfTodayKey = () => {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+  };
+  const cfSafeGet = (key, fallback = "") => {
+    try {
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (_) { return fallback; }
+  };
+  const cfSafeSet = (key, value) => {
+    try { localStorage.setItem(key, String(value)); } catch (_) { /* storage may be blocked */ }
+  };
+  const cfEsc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[char]));
+
+  const quotes = [
+    { quote: "Small progress is still progress.", author: "Your CampusFlow reminder" },
+    { quote: "Start where you are. Use what you have. Do what you can.", author: "A little nudge for today" },
+    { quote: "You do not need a perfect plan. You need a first step.", author: "Your CampusFlow reminder" },
+    { quote: "Focus on the next 25 minutes, not the whole semester.", author: "Focus, one session at a time" },
+    { quote: "Consistency beats last-minute panic.", author: "Your CampusFlow reminder" },
+    { quote: "Your effort counts, even before the result shows.", author: "A note to yourself" }
+  ];
+  const moods = [
+    { value: "energized", emoji: "⚡", label: "Energized" },
+    { value: "okay", emoji: "🌤️", label: "Doing okay" },
+    { value: "tired", emoji: "🌿", label: "Need a gentle day" }
+  ];
+
+  function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    if (hour < 21) return "Good evening";
+    return "Still here? Take it one step at a time";
+  }
+
+  function getDailyBrief() {
+    const list = Array.isArray(window.tasks) ? window.tasks : (typeof tasks !== "undefined" && Array.isArray(tasks) ? tasks : []);
+    const pending = list.filter(task => !task.done);
+    const overdue = pending.filter(task => task.due && new Date(task.due + "T00:00:00") < new Date(new Date().toDateString()));
+    const dueToday = pending.filter(task => task.due === cfTodayKey());
+    const urgent = pending.filter(task => task.priority === "High").sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
+    if (overdue.length) return { icon: "⏳", title: `${overdue.length} overdue ${overdue.length === 1 ? "task" : "tasks"}`, text: "Clear one overdue item first. A small win will make the rest feel lighter." };
+    if (dueToday.length) return { icon: "📌", title: `${dueToday.length} due today`, text: "Keep today simple: finish the nearest deadline before starting something new." };
+    if (urgent) return { icon: "✨", title: "Your next best move", text: `Start with “${urgent.title}”${urgent.subject ? ` for ${urgent.subject}` : ""}. It is marked high priority.` };
+    if (pending.length) return { icon: "🌱", title: "Build a little momentum", text: `You have ${pending.length} task${pending.length === 1 ? "" : "s"} left. Pick one and give it 25 focused minutes.` };
+    return { icon: "🏆", title: "Everything is clear", text: "Your task list is complete. Take a break or add your next assignment when ready." };
+  }
+
+  function renderSignature() {
+    const root = document.getElementById("cfSignature");
+    if (!root) return;
+    const list = (typeof tasks !== "undefined" && Array.isArray(tasks)) ? tasks : [];
+    const total = list.length;
+    const completed = list.filter(task => task.done).length;
+    const pending = total - completed;
+    const percent = total ? Math.round(completed / total * 100) : 0;
+    const goal = Math.max(1, Number(cfSafeGet("cf_signature_week_goal", "5")) || 5);
+    const weekDone = Number(cfSafeGet("cf_signature_week_done", "0")) || 0;
+    const dailyMood = cfSafeGet("cf_signature_mood_" + cfTodayKey(), "");
+    const intention = cfSafeGet("cf_signature_intention_" + cfTodayKey(), "");
+    const brief = getDailyBrief();
+    const quoteIndex = Number(cfSafeGet("cf_signature_quote", "0")) % quotes.length;
+    const quote = quotes[quoteIndex];
+    const moodMarkup = moods.map(mood => `
+      <button type="button" class="cf-signature-mood ${dailyMood === mood.value ? "is-selected" : ""}" data-cf-mood="${mood.value}" aria-pressed="${dailyMood === mood.value}">
+        <span>${mood.emoji}</span><small>${mood.label}</small>
+      </button>`).join("");
+
+    root.innerHTML = `
+      <section class="cf-signature-hero">
+        <div class="cf-signature-orb cf-signature-orb-one"></div><div class="cf-signature-orb cf-signature-orb-two"></div>
+        <div class="cf-signature-hero-copy">
+          <p class="cf-signature-kicker">YOUR PERSONAL STUDY SPACE</p>
+          <h2>${cfEsc(getGreeting())} <span class="cf-signature-sparkle">✦</span></h2>
+          <p class="cf-signature-lead">Make room for progress, not pressure.</p>
+          <div class="cf-signature-actions">
+            <button type="button" class="cf-signature-main-btn" data-cf-action="add">＋ Add assignment</button>
+            <button type="button" class="cf-signature-glass-btn" data-cf-action="focus">◉ ${document.body.classList.contains("cf-focus-mode") ? "Exit focus mode" : "Focus mode"}</button>
+          </div>
+        </div>
+        <div class="cf-signature-progress" aria-label="${percent}% assignments completed">
+          <div class="cf-signature-ring" style="--cf-progress:${percent * 3.6}deg"><div><strong>${percent}%</strong><span>completed</span></div></div>
+          <p><strong>${completed}</strong> of ${total} assignments done</p>
+        </div>
+      </section>
+
+      <div class="cf-signature-grid">
+        <article class="cf-signature-card cf-signature-brief-card">
+          <div class="cf-signature-card-top"><span class="cf-signature-icon">${brief.icon}</span><span class="cf-signature-label">SMART BRIEF</span></div>
+          <h3>${cfEsc(brief.title)}</h3><p>${cfEsc(brief.text)}</p>
+          <button type="button" class="cf-signature-text-btn" data-cf-action="next">Show my tasks <span>↗</span></button>
+        </article>
+        <article class="cf-signature-card cf-signature-quote-card">
+          <div class="cf-signature-card-top"><span class="cf-signature-icon">✧</span><span class="cf-signature-label">A NOTE FOR YOU</span></div>
+          <blockquote>“${cfEsc(quote.quote)}”</blockquote><p class="cf-signature-quote-author">${cfEsc(quote.author)}</p>
+          <button type="button" class="cf-signature-text-btn" data-cf-action="quote">Another little reminder ↻</button>
+        </article>
+        <article class="cf-signature-card cf-signature-checkin-card">
+          <div class="cf-signature-card-top"><span class="cf-signature-icon">☁</span><span class="cf-signature-label">DAILY CHECK-IN</span></div>
+          <h3>How's your energy today?</h3><p>No pressure. Choose the pace that feels right.</p>
+          <div class="cf-signature-moods">${moodMarkup}</div>
+          <label class="cf-signature-intention-label" for="cfSignatureIntention">Today's tiny intention</label>
+          <div class="cf-signature-intention-row"><input id="cfSignatureIntention" maxlength="90" placeholder="e.g. Revise Java for 20 minutes" value="${cfEsc(intention)}"><button type="button" data-cf-action="save-intention" aria-label="Save intention">Save</button></div>
+          <p class="cf-signature-saved" id="cfSignatureSaved" aria-live="polite">${intention ? "Your intention is saved for today ✨" : "One small promise to yourself is enough."}</p>
+        </article>
+        <article class="cf-signature-card cf-signature-challenge-card">
+          <div class="cf-signature-card-top"><span class="cf-signature-icon">♧</span><span class="cf-signature-label">WEEKLY CHALLENGE</span></div>
+          <h3>Collect small wins</h3><p>Complete assignments to build your weekly momentum.</p>
+          <div class="cf-signature-challenge-numbers"><strong>${Math.min(weekDone, goal)}<span> / ${goal}</span></strong><span>weekly wins</span></div>
+          <div class="cf-signature-track"><span style="width:${Math.min(100, Math.round(weekDone / goal * 100))}%"></span></div>
+          <div class="cf-signature-goal-row"><label for="cfSignatureGoal">Set your goal</label><select id="cfSignatureGoal"><option value="3" ${goal === 3 ? "selected" : ""}>3 wins</option><option value="5" ${goal === 5 ? "selected" : ""}>5 wins</option><option value="7" ${goal === 7 ? "selected" : ""}>7 wins</option><option value="10" ${goal === 10 ? "selected" : ""}>10 wins</option></select></div>
+          <p class="cf-signature-saved">${weekDone >= goal ? "Challenge complete — celebrate that! 🎉" : `${goal - Math.min(weekDone, goal)} more to reach your goal.`}</p>
+        </article>
+      </div>
+      <div class="cf-signature-footnote"><span>✦</span> Your progress is saved in this browser. <span class="cf-signature-shortcuts">Shortcuts: <kbd>/</kbd> search · <kbd>N</kbd> new task · <kbd>D</kbd> theme</span></div>
+    `;
+  }
+
+  function setMood(value) {
+    const key = "cf_signature_mood_" + cfTodayKey();
+    cfSafeSet(key, value);
+    renderSignature();
+    if (typeof showToast === "function") showToast("Check-in saved. Be kind to yourself today 💜");
+  }
+
+  function handleAction(action) {
+    if (action === "add") {
+      const addButton = document.getElementById("openAdd");
+      if (addButton) addButton.click();
+      else if (typeof openModal === "function") openModal();
+    } else if (action === "focus") {
+      document.body.classList.toggle("cf-focus-mode");
+      renderSignature();
+      if (typeof showToast === "function") showToast(document.body.classList.contains("cf-focus-mode") ? "Focus mode on — one thing at a time ✨" : "Focus mode off");
+    } else if (action === "quote") {
+      cfSafeSet("cf_signature_quote", (Number(cfSafeGet("cf_signature_quote", "0")) + 1) % quotes.length);
+      renderSignature();
+    } else if (action === "next") {
+      const list = document.getElementById("taskList");
+      const panel = document.querySelector(".panel");
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      const pendingHigh = (typeof tasks !== "undefined" ? tasks : []).find(task => !task.done && task.priority === "High");
+      if (pendingHigh && typeof showToast === "function") showToast("Next up: " + pendingHigh.title);
+      if (list) list.classList.add("cf-signature-task-highlight");
+      setTimeout(() => list && list.classList.remove("cf-signature-task-highlight"), 1400);
+    } else if (action === "save-intention") {
+      const input = document.getElementById("cfSignatureIntention");
+      const value = input ? input.value.trim() : "";
+      cfSafeSet("cf_signature_intention_" + cfTodayKey(), value);
+      const saved = document.getElementById("cfSignatureSaved");
+      if (saved) saved.textContent = value ? "Your intention is saved for today ✨" : "Add a tiny intention whenever you're ready.";
+      if (typeof showToast === "function") showToast(value ? "Today's intention saved ✨" : "Intention cleared");
+    }
+  }
+
+  function mount() {
+    if (document.getElementById("cfSignature")) return;
+    const welcome = document.querySelector("main .welcome");
+    if (!welcome) return;
+    const root = document.createElement("section");
+    root.id = "cfSignature";
+    root.className = "cf-signature";
+    welcome.insertAdjacentElement("afterend", root);
+    renderSignature();
+
+    root.addEventListener("click", event => {
+      const moodButton = event.target.closest("[data-cf-mood]");
+      if (moodButton) { setMood(moodButton.dataset.cfMood); return; }
+      const actionButton = event.target.closest("[data-cf-action]");
+      if (actionButton) handleAction(actionButton.dataset.cfAction);
+    });
+    root.addEventListener("change", event => {
+      if (event.target.id === "cfSignatureGoal") {
+        cfSafeSet("cf_signature_week_goal", event.target.value);
+        renderSignature();
+        if (typeof showToast === "function") showToast("Weekly goal updated");
+      }
+    });
+  }
+
+  // Track completion changes for the weekly challenge, without double-counting.
+  function watchTaskChanges() {
+    const list = document.getElementById("taskList");
+    if (!list || list.dataset.cfSignatureWatching) return;
+    list.dataset.cfSignatureWatching = "true";
+    list.addEventListener("change", event => {
+      if (!event.target.matches('input[type="checkbox"]')) return;
+      const row = event.target.closest(".task");
+      if (!row) return;
+      const key = "cf_signature_counted_" + cfTodayKey();
+      const id = row.dataset.taskId || row.getAttribute("data-id") || ((row.querySelector(".task-title")?.textContent || "task") + "|" + (row.querySelector(".task-meta")?.textContent || ""));
+      if (event.target.checked) {
+        const counted = (() => { try { return JSON.parse(cfSafeGet(key, "[]")); } catch (_) { return []; } })();
+        if (!counted.includes(id)) {
+          counted.push(id);
+          cfSafeSet(key, JSON.stringify(counted));
+          cfSafeSet("cf_signature_week_done", (Number(cfSafeGet("cf_signature_week_done", "0")) || 0) + 1);
+        }
+      }
+      setTimeout(renderSignature, 80);
+    });
+  }
+
+  document.addEventListener("keydown", event => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (target && (target.matches("input, textarea, select") || target.isContentEditable)) return;
+    if (event.key === "/") {
+      event.preventDefault();
+      const search = document.getElementById("search");
+      if (search) search.focus();
+    } else if (event.key.toLowerCase() === "n") {
+      event.preventDefault();
+      handleAction("add");
+    } else if (event.key.toLowerCase() === "d") {
+      const theme = document.getElementById("themeToggle");
+      if (theme) theme.click();
+    }
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => { mount(); watchTaskChanges(); });
+  } else {
+    mount();
+    watchTaskChanges();
+  }
+  // Refresh summary when the main task renderer updates the list.
+  const taskList = document.getElementById("taskList");
+  if (taskList && "MutationObserver" in window) {
+    new MutationObserver(() => renderSignature()).observe(taskList, { childList: true, subtree: true });
+  }
+  // Keep the greeting fresh if the page stays open across the day.
+  renderSignature();
+})();
