@@ -1400,3 +1400,74 @@ body.dark-mode .cf-filter-grid select,
     padding: 18px;
   }
 }
+
+/* ===== CampusFlow Premium Features ===== */
+
+.cf-tip{
+background:linear-gradient(135deg,#f6f1ff,#ffffff);
+padding:15px;
+border-radius:14px;
+margin:10px 0;
+animation:fadeUp .5s ease;
+}
+
+.cf-timeline-item{
+display:flex;
+gap:12px;
+margin:15px 0;
+align-items:flex-start;
+}
+
+.cf-timeline-item .dot{
+width:12px;
+height:12px;
+background:#8b5cf6;
+border-radius:50%;
+margin-top:6px;
+box-shadow:0 0 10px #b794f6;
+}
+
+.cf-grade{
+width:80px;
+height:80px;
+margin:auto;
+display:grid;
+place-items:center;
+border-radius:50%;
+font-size:28px;
+font-weight:bold;
+background:linear-gradient(135deg,#8b5cf6,#c084fc);
+color:white;
+box-shadow:0 8px 20px rgba(139,92,246,.3);
+}
+
+.confetti{
+position:fixed;
+top:-20px;
+width:10px;
+height:10px;
+z-index:9999;
+animation:fall 2.5s linear forwards;
+}
+
+@keyframes fall{
+to{
+transform:translateY(110vh) rotate(720deg);
+opacity:0;
+}
+}
+
+@keyframes fadeUp{
+from{
+opacity:0;
+transform:translateY(15px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+body.dark-mode .cf-tip{
+background:#2d2143;
+}
