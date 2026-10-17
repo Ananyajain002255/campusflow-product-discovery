@@ -136,6 +136,16 @@ function setupAdvancedUI() {
         <h3>Subject-wise progress</h3>
         <div id="cfSubjectProgress"></div>
       </div>`;
+
+    const aiCard = document.createElement("div");
+aiCard.className = "cf-plus-card";
+aiCard.innerHTML = `
+<h3>🤖 Smart Study Suggestions</h3>
+<div id="cfAISuggestions"></div>
+`;
+
+panel.appendChild(aiCard);
+    
     stats.insertAdjacentElement("afterend", panel);
 
     $("sortMode").addEventListener("change", event => {
@@ -909,6 +919,27 @@ function setupTaskTools() {
 // ===== CAMPUSFLOW PLUS FEATURES =====
 
 function setupCampusFlowPlus() {
+
+  const report=document.createElement("div");
+
+report.className="cf-plus-card";
+
+report.innerHTML=`
+<h3>📈 Weekly Report</h3>
+<div id="cfWeeklyReport"></div>
+`;
+
+panel.appendChild(report);
+  const timeline=document.createElement("div");
+
+timeline.className="cf-plus-card";
+
+timeline.innerHTML=`
+<h3>📅 Upcoming Timeline</h3>
+<div id="cfTimeline"></div>
+`;
+
+panel.appendChild(timeline);
   const taskList = document.getElementById("taskList");
   if (!taskList || document.getElementById("cfPlusPanel")) return;
 
@@ -919,6 +950,28 @@ function setupCampusFlowPlus() {
       return fallback;
     }
   };
+
+  const quotes = [
+"Small progress is still progress.",
+"One assignment at a time.",
+"Success comes from consistency.",
+"Your future self will thank you.",
+"Discipline beats motivation."
+];
+
+const quoteCard = document.createElement("div");
+quoteCard.className="cf-plus-card";
+
+quoteCard.innerHTML=`
+<h3>💜 Daily Motivation</h3>
+<p id="cfQuote"></p>
+`;
+
+panel.appendChild(quoteCard);
+
+document.getElementById("cfQuote").textContent =
+quotes[Math.floor(Math.random()*quotes.length)];
+  
 
   const saveStore = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value));
@@ -992,6 +1045,37 @@ function setupCampusFlowPlus() {
       updatePlusDashboard();
     }
   });
+
+  const suggestionBox = document.getElementById("cfAISuggestions");
+if (suggestionBox) {
+  suggestionBox.innerHTML = "";
+
+  const pending = tasks.filter(t => !t.done);
+
+  if (!pending.length) {
+    suggestionBox.innerHTML =
+      "<p>🎉 Amazing! All assignments are completed.</p>";
+  } else {
+    const nearest = [...pending].sort((a,b)=>a.due.localeCompare(b.due))[0];
+
+    suggestionBox.innerHTML = `
+      <div class="cf-tip">
+        <strong>Today's Priority</strong>
+        <p>Complete <b>${nearest.title}</b> (${nearest.subject}).</p>
+      </div>
+
+      <div class="cf-tip">
+        <strong>Remaining Tasks</strong>
+        <p>You have <b>${pending.length}</b> assignments left.</p>
+      </div>
+
+      <div class="cf-tip">
+        <strong>Productivity Tip</strong>
+        <p>Finish one high-priority task before starting a new one.</p>
+      </div>
+    `;
+  }
+}
 
   // Populate subject filter
   function updateSubjectOptions() {
@@ -1235,8 +1319,72 @@ function setupCampusFlowPlus() {
   updatePlusDashboard();
 }
 
+const reportBox=document.getElementById("cfWeeklyReport");
+
+if(reportBox){
+
+const completed=tasks.filter(t=>t.done).length;
+const pending=tasks.filter(t=>!t.done).length;
+
+const rate=tasks.length
+?Math.round(completed/tasks.length*100)
+:0;
+
+let grade="D";
+
+if(rate>=90) grade="A+";
+else if(rate>=75) grade="A";
+else if(rate>=60) grade="B";
+else if(rate>=40) grade="C";
+
+reportBox.innerHTML=`
+<div class="cf-grade">${grade}</div>
+<p><b>${completed}</b> completed</p>
+<p><b>${pending}</b> pending</p>
+<p>Completion: <b>${rate}%</b></p>`;
+}
+
+const timelineBox=document.getElementById("cfTimeline");
+
+if(timelineBox){
+
+timelineBox.innerHTML="";
+
+tasks
+.filter(t=>!t.done)
+.sort((a,b)=>a.due.localeCompare(b.due))
+.slice(0,5)
+.forEach(task=>{
+
+timelineBox.innerHTML+=`
+<div class="cf-timeline-item">
+<div class="dot"></div>
+<div>
+<strong>${task.title}</strong>
+<p>${task.subject} • ${task.due}</p>
+</div>
+</div>`;
+});
+}
+
 setupAdvancedUI();
 setupProductivityHub();
 setupTaskTools();
 setupCampusFlowPlus();
 render();
+
+// Confetti animation
+function launchConfetti() {
+    for (let i = 0; i < 30; i++) {
+        const piece = document.createElement("div");
+
+        piece.className = "confetti";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = `hsl(${Math.random() * 360},80%,65%)`;
+        piece.style.animationDelay = Math.random() + "s";
+
+        document.body.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 2500);
+    }
+}
