@@ -293,7 +293,8 @@ function render() {
   $("progress").style.width = percentage + "%";
   $("progressText").textContent = percentage + "% complete";
   renderAnalytics(percentage);
-
+  renderProductivityHub();
+  
   const query = $("search").value.trim().toLowerCase();
   const subject = $("subjectFilter").value;
 
@@ -346,11 +347,24 @@ function render() {
     checkbox.checked = task.done;
     checkbox.setAttribute("aria-label", "Mark " + task.title + " complete");
 
-    checkbox.addEventListener("change", () => {
-      task.done = checkbox.checked;
-      render();
-      showToast(task.done ? "Assignment completed! 🎉" : "Assignment marked pending");
-    });
+    
+checkbox.addEventListener("change", () => {
+  task.done = checkbox.checked;
+
+  if (task.done) {
+    task.completedOn = dateOffset(0);
+  } else {
+    delete task.completedOn;
+  }
+
+  render();
+  showToast(
+    task.done
+      ? "Assignment completed! 🎉"
+      : "Assignment marked pending"
+  );
+});
+
 
     const info = document.createElement("div");
     info.className = "task-info";
@@ -475,6 +489,351 @@ document.querySelectorAll(".tab").forEach(button => {
 });
 
 
+/* ===== CampusFlow Productivity Hub ===== */
+
+let calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+let selectedCalendarDate = dateOffset(0);
+let focusSeconds = 25 * 60;
+let focusInterval = null;
+let focusRunning = false;
+let focusMode = "focus";
+
+function getStudyGoal() {
+  return Math.max(1, Number(localStorage.getItem("cf_daily_goal")) || 3);
+}
+
+function getFocusCount() {
+  return Number(localStorage.getItem("cf_focus_count")) || 0;
+}
+
+function setupProductivityHub() {
+  if ($("cfProductivityHub")) return;
+
+  const hub = document.createElement("section");
+  hub.id = "cfProductivityHub";
+  hub.className = "cf-productivity-hub";
+
+  hub.innerHTML = `
+    <div class="cf-hub-heading">
+      <p class="cf-eyebrow">STUDY SMARTER</p>
+      <h2>Your Productivity Hub ✨</h2>
+      <p>Plan your deadlines, focus deeply and track your daily goals.</p>
+    </div>
+
+    <div class="cf-hub-grid">
+      <article class="cf-hub-card cf-calendar-card">
+        <div class="cf-card-heading">
+          <div><span class="cf-feature-icon">📅</span><h3>Deadline Calendar</h3></div>
+          <div class="cf-calendar-nav">
+            <button id="cfPrevMonth" type="button" aria-label="Previous month">‹</button>
+            <button id="cfNextMonth" type="button" aria-label="Next month">›</button>
+          </div>
+        </div>
+        <h4 id="cfCalendarTitle"></h4>
+        <div class="cf-calendar-week">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+          <span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div id="cfCalendarGrid" class="cf-calendar-grid"></div>
+        <div class="cf-selected-date">
+          <strong id="cfSelectedDateLabel"></strong>
+          <div id="cfCalendarTasks"></div>
+        </div>
+      </article>
+
+      <article class="cf-hub-card cf-focus-card">
+        <span class="cf-feature-icon">⏱️</span>
+        <h3>Focus Timer</h3>
+        <p class="cf-muted">One session at a time. You've got this!</p>
+        <div id="cfTimerDisplay" class="cf-timer-display">25:00</div>
+        <div class="cf-timer-modes">
+          <button type="button" data-mode="focus" class="active">Focus 25m</button>
+          <button type="button" data-mode="short">Break 5m</button>
+        </div>
+        <div class="cf-timer-actions">
+          <button id="cfTimerStart" type="button" class="cf-primary-btn">▶ Start</button>
+          <button id="cfTimerReset" type="button" class="cf-secondary-btn">↺ Reset</button>
+        </div>
+        <p class="cf-session-count">Completed focus sessions: <strong id="cfFocusCount">0</strong></p>
+      </article>
+
+      <article class="cf-hub-card cf-goal-card">
+        <span class="cf-feature-icon">🎯</span>
+        <h3>Today's Study Goal</h3>
+        <p class="cf-muted">Choose how many assignments you want to finish today.</p>
+        <label class="cf-goal-label" for="cfGoalInput">Daily completion goal</label>
+        <div class="cf-goal-controls">
+          <input id="cfGoalInput" type="number" min="1" max="50" value="3">
+          <button id="cfSaveGoal" type="button" class="cf-primary-btn">Save goal</button>
+        </div>
+        <div class="cf-goal-track"><div id="cfGoalBar"></div></div>
+        <p id="cfGoalText" class="cf-goal-text"></p>
+      </article>
+
+      <article class="cf-hub-card cf-backup-card">
+        <span class="cf-feature-icon">🗂️</span>
+        <h3>Data Backup</h3>
+        <p class="cf-muted">Keep a copy of your assignments or restore them later.</p>
+        <button id="cfBackupBtn" type="button" class="cf-primary-btn">⬇ Download backup</button>
+        <label class="cf-import-label" for="cfImportFile">Restore from JSON backup</label>
+        <input id="cfImportFile" type="file" accept=".json,application/json">
+        <p class="cf-backup-note">Restoring replaces your current assignment list.</p>
+      </article>
+    </div>
+  `;
+
+  const analytics = $("cfAnalytics");
+  const stats = document.querySelector(".stats");
+  if (analytics) analytics.insertAdjacentElement("afterend", hub);
+  else if (stats) stats.insertAdjacentElement("afterend", hub);
+  else document.querySelector("main")?.appendChild(hub);
+
+  $("cfPrevMonth").addEventListener("click", () => {
+    calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+    renderProductivityHub();
+  });
+
+  $("cfNextMonth").addEventListener("click", () => {
+    calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+    renderProductivityHub();
+  });
+
+  $("cfCalendarGrid").addEventListener("click", event => {
+    const dayButton = event.target.closest("[data-date]");
+    if (!dayButton) return;
+    selectedCalendarDate = dayButton.dataset.date;
+    renderProductivityHub();
+  });
+
+  document.querySelectorAll("[data-mode]").forEach(button => {
+    button.addEventListener("click", () => {
+      focusMode = button.dataset.mode;
+      stopFocusTimer();
+      focusSeconds = focusMode === "focus" ? 25 * 60 : 5 * 60;
+      document.querySelectorAll("[data-mode]").forEach(item => {
+        item.classList.toggle("active", item === button);
+      });
+      updateFocusDisplay();
+    });
+  });
+
+  $("cfTimerStart").addEventListener("click", () => {
+    if (focusRunning) {
+      stopFocusTimer();
+      $("cfTimerStart").textContent = "▶ Resume";
+      return;
+    }
+
+    focusRunning = true;
+    $("cfTimerStart").textContent = "Ⅱ Pause";
+
+    focusInterval = setInterval(() => {
+      focusSeconds--;
+      updateFocusDisplay();
+
+      if (focusSeconds <= 0) {
+        stopFocusTimer();
+
+        if (focusMode === "focus") {
+          localStorage.setItem("cf_focus_count", String(getFocusCount() + 1));
+          showToast("Focus session complete! Take a break 🎉");
+        } else {
+          showToast("Break complete! Ready to focus? 💜");
+        }
+
+        focusSeconds = focusMode === "focus" ? 25 * 60 : 5 * 60;
+        updateFocusDisplay();
+      }
+    }, 1000);
+  });
+
+  $("cfTimerReset").addEventListener("click", () => {
+    stopFocusTimer();
+    focusSeconds = focusMode === "focus" ? 25 * 60 : 5 * 60;
+    updateFocusDisplay();
+  });
+
+  $("cfSaveGoal").addEventListener("click", () => {
+    const value = Number($("cfGoalInput").value);
+    if (!Number.isInteger(value) || value < 1 || value > 50) {
+      showToast("Choose a daily goal between 1 and 50.");
+      return;
+    }
+    localStorage.setItem("cf_daily_goal", String(value));
+    renderProductivityHub();
+    showToast("Daily goal saved! 🎯");
+  });
+
+  $("cfBackupBtn").addEventListener("click", () => {
+    const backup = {
+      app: "CampusFlow",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      tasks
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "CampusFlow_Backup.json";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Backup downloaded successfully!");
+  });
+
+  $("cfImportFile").addEventListener("change", async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const data = JSON.parse(await file.text());
+      const imported = Array.isArray(data) ? data : data.tasks;
+
+      const valid = Array.isArray(imported) && imported.every(task =>
+        task &&
+        typeof task.title === "string" &&
+        typeof task.subject === "string" &&
+        typeof task.due === "string" &&
+        ["High", "Medium", "Low"].includes(task.priority) &&
+        typeof task.done === "boolean"
+      );
+
+      if (!valid) throw new Error("Invalid backup format");
+
+      if (!confirm("Restore this backup? Your current assignments will be replaced.")) {
+        event.target.value = "";
+        return;
+      }
+
+      tasks = imported.map((task, index) => ({
+        ...task,
+        id: Number(task.id) || Date.now() + index
+      }));
+
+      render();
+      showToast("Backup restored successfully!");
+    } catch {
+      showToast("Invalid backup file. Please choose a CampusFlow JSON backup.");
+    }
+
+    event.target.value = "";
+  });
+
+  $("cfGoalInput").value = getStudyGoal();
+  updateFocusDisplay();
+  renderProductivityHub();
+}
+
+function stopFocusTimer() {
+  if (focusInterval) clearInterval(focusInterval);
+  focusInterval = null;
+  focusRunning = false;
+  if ($("cfTimerStart")) $("cfTimerStart").textContent = "▶ Start";
+}
+
+function updateFocusDisplay() {
+  const display = $("cfTimerDisplay");
+  if (!display) return;
+
+  const mins = Math.floor(focusSeconds / 60);
+  const secs = focusSeconds % 60;
+  display.textContent =
+    String(mins).padStart(2, "0") + ":" +
+    String(secs).padStart(2, "0");
+
+  $("cfFocusCount").textContent = getFocusCount();
+}
+
+function renderProductivityHub() {
+  if (!$("cfProductivityHub")) return;
+
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+
+  $("cfCalendarTitle").textContent =
+    calendarMonth.toLocaleDateString("en-IN", {
+      month: "long",
+      year: "numeric"
+    });
+
+  const grid = $("cfCalendarGrid");
+  grid.replaceChildren();
+
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let i = 0; i < firstWeekday; i++) {
+    const blank = document.createElement("span");
+    blank.className = "cf-calendar-blank";
+    grid.appendChild(blank);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = [
+      year,
+      String(month + 1).padStart(2, "0"),
+      String(day).padStart(2, "0")
+    ].join("-");
+
+    const dayTasks = tasks.filter(task => task.due === key && !task.done);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "cf-calendar-day";
+    button.dataset.date = key;
+    button.textContent = day;
+
+    if (key === dateOffset(0)) button.classList.add("cf-calendar-today");
+    if (key === selectedCalendarDate) button.classList.add("cf-calendar-selected");
+    if (dayTasks.length) button.classList.add("cf-calendar-has-task");
+    if (dayTasks.some(task => daysUntil(task.due) < 0)) {
+      button.classList.add("cf-calendar-overdue");
+    }
+
+    button.title = dayTasks.length
+      ? `${dayTasks.length} pending assignment(s)`
+      : "No pending assignments";
+
+    grid.appendChild(button);
+  }
+
+  $("cfSelectedDateLabel").textContent =
+    new Date(selectedCalendarDate + "T00:00:00").toLocaleDateString(
+      "en-IN", { weekday: "long", day: "numeric", month: "long" }
+    );
+
+  const dateTasks = tasks.filter(task => task.due === selectedCalendarDate);
+  const taskContainer = $("cfCalendarTasks");
+  taskContainer.replaceChildren();
+
+  if (!dateTasks.length) {
+    const empty = document.createElement("p");
+    empty.className = "cf-muted";
+    empty.textContent = "No assignments due on this date.";
+    taskContainer.appendChild(empty);
+  } else {
+    dateTasks.forEach(task => {
+      const line = document.createElement("p");
+      line.className = "cf-calendar-task";
+      line.textContent = `${task.done ? "✓" : "•"} ${task.title} — ${task.done ? "Completed" : task.priority}`;
+      taskContainer.appendChild(line);
+    });
+  }
+
+  const goal = getStudyGoal();
+  const completedToday = tasks.filter(task =>
+    task.done && task.completedOn === dateOffset(0)
+  ).length;
+
+  $("cfGoalInput").value = goal;
+  $("cfGoalBar").style.width =
+    Math.min(100, Math.round(completedToday / goal * 100)) + "%";
+  $("cfGoalText").textContent =
+    `${completedToday} of ${goal} assignments completed today`;
+}
+
+
 function setupTaskTools() {
   const heading = document.querySelector(".panel-heading");
   if (!heading || $("cfTaskTools")) return;
@@ -547,6 +906,9 @@ function setupTaskTools() {
   heading.appendChild(tools);
 }
 
+
 setupAdvancedUI();
+setupProductivityHub();
 setupTaskTools();
 render();
+
