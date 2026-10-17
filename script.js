@@ -101,6 +101,7 @@ function setupAdvancedUI() {
     const panel = document.createElement("section");
     panel.id = "cfAnalytics";
     panel.className = "cf-analytics";
+
     panel.innerHTML = `
       <div class="cf-analytics-heading">
         <div>
@@ -115,6 +116,7 @@ function setupAdvancedUI() {
           </select>
         </label>
       </div>
+
       <div class="cf-insight-grid">
         <div class="cf-insight">
           <span>Pending work</span>
@@ -132,20 +134,12 @@ function setupAdvancedUI() {
           <small>Semester progress</small>
         </div>
       </div>
+
       <div class="cf-subject-area">
         <h3>Subject-wise progress</h3>
         <div id="cfSubjectProgress"></div>
       </div>`;
 
-    const aiCard = document.createElement("div");
-aiCard.className = "cf-plus-card";
-aiCard.innerHTML = `
-<h3>🤖 Smart Study Suggestions</h3>
-<div id="cfAISuggestions"></div>
-`;
-
-panel.appendChild(aiCard);
-    
     stats.insertAdjacentElement("afterend", panel);
 
     $("sortMode").addEventListener("change", event => {
@@ -919,85 +913,65 @@ function setupTaskTools() {
 // ===== CAMPUSFLOW PLUS FEATURES =====
 
 function setupCampusFlowPlus() {
-
-  const report=document.createElement("div");
-
-report.className="cf-plus-card";
-
-report.innerHTML=`
-<h3>📈 Weekly Report</h3>
-<div id="cfWeeklyReport"></div>
-`;
-
-panel.appendChild(report);
-  const timeline=document.createElement("div");
-
-timeline.className="cf-plus-card";
-
-timeline.innerHTML=`
-<h3>📅 Upcoming Timeline</h3>
-<div id="cfTimeline"></div>
-`;
-
-panel.appendChild(timeline);
-  const taskList = document.getElementById("taskList");
-  if (!taskList || document.getElementById("cfPlusPanel")) return;
+  const taskList = $("taskList");
+  if (!taskList || $("cfPlusPanel")) return;
 
   const readStore = (key, fallback) => {
     try {
-      return JSON.parse(localStorage.getItem(key)) ?? fallback;
+      const value = JSON.parse(localStorage.getItem(key));
+      return value ?? fallback;
     } catch {
       return fallback;
     }
   };
 
-  const quotes = [
-"Small progress is still progress.",
-"One assignment at a time.",
-"Success comes from consistency.",
-"Your future self will thank you.",
-"Discipline beats motivation."
-];
-
-const quoteCard = document.createElement("div");
-quoteCard.className="cf-plus-card";
-
-quoteCard.innerHTML=`
-<h3>💜 Daily Motivation</h3>
-<p id="cfQuote"></p>
-`;
-
-panel.appendChild(quoteCard);
-
-document.getElementById("cfQuote").textContent =
-quotes[Math.floor(Math.random()*quotes.length)];
-  
-
   const saveStore = (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value));
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn("Could not save CampusFlow data.", error);
+      showToast("Could not save data in this browser.");
+    }
   };
+
+  const quotes = [
+    "Small progress is still progress.",
+    "One assignment at a time.",
+    "Success comes from consistency.",
+    "Your future self will thank you.",
+    "Discipline beats motivation."
+  ];
 
   let profile = readStore("cf_student_profile", { name: "Student" });
   let notes = readStore("cf_assignment_notes", {});
-  let earned = readStore("cf_earned_tasks", []);
+  let earned = readStore("cf_earned_tasks", []).map(String);
   let studyDates = readStore("cf_study_dates", []);
 
-  const today = () => new Date().toLocaleDateString("en-CA");
-  const getTask = (row) =>
-    tasks.find(t => row.innerText.includes(t.title));
+  const getTodayKey = () => {
+    const date = new Date();
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0")
+    ].join("-");
+  };
+
+  const getTask = row => {
+    const title = row.querySelector(".task-title")?.textContent;
+    return tasks.find(task => task.title === title);
+  };
 
   const panel = document.createElement("section");
   panel.id = "cfPlusPanel";
   panel.className = "cf-plus-panel";
-
   panel.innerHTML = `
     <div class="cf-profile-card">
       <div>
         <p class="cf-plus-eyebrow">YOUR STUDY SPACE</p>
-        <h2 id="cfWelcome">Hey, ${profile.name} 👋</h2>
+        <h2 id="cfWelcome"></h2>
         <p>Small steps every day lead to big results.</p>
       </div>
-      <button id="cfEditProfile" class="cf-plus-button">Edit profile</button>
+      <button id="cfEditProfile" type="button" class="cf-plus-button">Edit profile</button>
       <div class="cf-profile-stats">
         <div><strong id="cfXP">0</strong><span>Total XP</span></div>
         <div><strong id="cfStreak">0</strong><span>Day streak 🔥</span></div>
@@ -1014,91 +988,71 @@ quotes[Math.floor(Math.random()*quotes.length)];
     <div class="cf-plus-card">
       <h3>🔎 Advanced Filters</h3>
       <div class="cf-filter-grid">
-        <select id="cfFilterSubject">
+        <select id="cfFilterSubject" aria-label="Filter by subject">
           <option value="all">All subjects</option>
         </select>
-        <select id="cfFilterPriority">
+        <select id="cfFilterPriority" aria-label="Filter by priority">
           <option value="all">All priorities</option>
           <option value="high">High priority</option>
           <option value="medium">Medium priority</option>
           <option value="low">Low priority</option>
         </select>
-        <select id="cfFilterStatus">
+        <select id="cfFilterStatus" aria-label="Filter by status">
           <option value="all">All statuses</option>
           <option value="pending">Pending</option>
           <option value="completed">Completed</option>
           <option value="overdue">Overdue</option>
         </select>
       </div>
-      <button id="cfResetFilters" class="cf-plus-button">Reset filters</button>
+      <button id="cfResetFilters" type="button" class="cf-plus-button">Reset filters</button>
+    </div>
+
+    <div class="cf-plus-card">
+      <h3>🤖 Smart Study Suggestions</h3>
+      <div id="cfAISuggestions"></div>
+    </div>
+
+    <div class="cf-plus-card">
+      <h3>📈 Weekly Report</h3>
+      <div id="cfWeeklyReport"></div>
+    </div>
+
+    <div class="cf-plus-card">
+      <h3>📅 Upcoming Timeline</h3>
+      <div id="cfTimeline"></div>
+    </div>
+
+    <div class="cf-plus-card">
+      <h3>💜 Daily Motivation</h3>
+      <p id="cfQuote"></p>
     </div>
   `;
 
   taskList.parentElement.insertBefore(panel, taskList);
+  $("cfQuote").textContent = quotes[Math.floor(Math.random() * quotes.length)];
 
-  // Personalized student profile
-  document.getElementById("cfEditProfile").addEventListener("click", () => {
-    const name = prompt("What should CampusFlow call you?", profile.name);
-    if (name && name.trim()) {
-      profile.name = name.trim();
-      saveStore("cf_student_profile", profile);
-      updatePlusDashboard();
-    }
+  $("cfEditProfile").addEventListener("click", () => {
+    const name = prompt("What should CampusFlow call you?", profile.name || "Student");
+    if (name === null || !name.trim()) return;
+    profile.name = name.trim();
+    saveStore("cf_student_profile", profile);
+    updatePlusDashboard();
   });
 
-  const suggestionBox = document.getElementById("cfAISuggestions");
-if (suggestionBox) {
-  suggestionBox.innerHTML = "";
-
-  const pending = tasks.filter(t => !t.done);
-
-  if (!pending.length) {
-    suggestionBox.innerHTML =
-      "<p>🎉 Amazing! All assignments are completed.</p>";
-  } else {
-    const nearest = [...pending].sort((a,b)=>a.due.localeCompare(b.due))[0];
-
-    suggestionBox.innerHTML = `
-      <div class="cf-tip">
-        <strong>Today's Priority</strong>
-        <p>Complete <b>${nearest.title}</b> (${nearest.subject}).</p>
-      </div>
-
-      <div class="cf-tip">
-        <strong>Remaining Tasks</strong>
-        <p>You have <b>${pending.length}</b> assignments left.</p>
-      </div>
-
-      <div class="cf-tip">
-        <strong>Productivity Tip</strong>
-        <p>Finish one high-priority task before starting a new one.</p>
-      </div>
-    `;
-  }
-}
-
-  // Populate subject filter
-  function updateSubjectOptions() {
-    const select = document.getElementById("cfFilterSubject");
+  function updatePlusSubjectOptions() {
+    const select = $("cfFilterSubject");
     const previous = select.value;
-    const subjects = [...new Set(tasks.map(t => t.subject).filter(Boolean))];
+    const subjects = [...new Set(tasks.map(task => task.subject).filter(Boolean))].sort();
 
-    select.innerHTML = '<option value="all">All subjects</option>';
-    subjects.forEach(subject => {
-      const option = document.createElement("option");
-      option.value = subject;
-      option.textContent = subject;
-      select.appendChild(option);
-    });
-
+    select.replaceChildren(new Option("All subjects", "all"));
+    subjects.forEach(subject => select.add(new Option(subject, subject)));
     select.value = subjects.includes(previous) ? previous : "all";
   }
 
-  // Advanced filtering
   function applyPlusFilters() {
-    const subject = document.getElementById("cfFilterSubject").value;
-    const priority = document.getElementById("cfFilterPriority").value;
-    const status = document.getElementById("cfFilterStatus").value;
+    const subject = $("cfFilterSubject").value;
+    const priority = $("cfFilterPriority").value;
+    const status = $("cfFilterStatus").value;
 
     [...taskList.children].forEach(row => {
       const task = getTask(row);
@@ -1107,81 +1061,76 @@ if (suggestionBox) {
       const matchesSubject = subject === "all" || task.subject === subject;
       const matchesPriority = priority === "all" ||
         String(task.priority).toLowerCase() === priority;
-
-      const isOverdue = !task.done && task.due &&
-        new Date(task.due + "T23:59:59") < new Date();
-
+      const overdue = !task.done && daysUntil(task.due) < 0;
       const matchesStatus = status === "all" ||
         (status === "completed" && task.done) ||
-        (status === "pending" && !task.done && !isOverdue) ||
-        (status === "overdue" && isOverdue);
+        (status === "pending" && !task.done && !overdue) ||
+        (status === "overdue" && overdue);
 
-      row.style.display =
-        matchesSubject && matchesPriority && matchesStatus ? "" : "none";
+      row.style.display = matchesSubject && matchesPriority && matchesStatus ? "" : "none";
     });
   }
 
   ["cfFilterSubject", "cfFilterPriority", "cfFilterStatus"].forEach(id => {
-    document.getElementById(id).addEventListener("change", applyPlusFilters);
+    $(id).addEventListener("change", applyPlusFilters);
   });
 
-  document.getElementById("cfResetFilters").addEventListener("click", () => {
-    document.getElementById("cfFilterSubject").value = "all";
-    document.getElementById("cfFilterPriority").value = "all";
-    document.getElementById("cfFilterStatus").value = "all";
+  $("cfResetFilters").addEventListener("click", () => {
+    $("cfFilterSubject").value = "all";
+    $("cfFilterPriority").value = "all";
+    $("cfFilterStatus").value = "all";
     applyPlusFilters();
   });
 
-  // Notes and resource links for each assignment
   function addNotesButtons() {
     [...taskList.children].forEach(row => {
       const task = getTask(row);
       if (!task || row.querySelector(".cf-notes-button")) return;
 
       const button = document.createElement("button");
+      button.type = "button";
       button.className = "cf-notes-button";
       button.textContent = "📝 Notes";
-      button.type = "button";
-
       button.addEventListener("click", () => {
         const old = notes[task.id] || { text: "", url: "" };
-        const text = prompt("Add assignment notes:", old.text);
+        const text = prompt("Assignment notes (leave blank to clear):", old.text || "");
         if (text === null) return;
-
-        const url = prompt("Add a resource URL (optional):", old.url);
+        const url = prompt("Resource URL (optional):", old.url || "");
         if (url === null) return;
 
-        notes[task.id] = { text, url };
+        notes[task.id] = { text: text.trim(), url: url.trim() };
         saveStore("cf_assignment_notes", notes);
+        button.textContent = text.trim() || url.trim() ? "📝 Saved" : "📝 Notes";
 
-        button.textContent = text || url ? "📝 Saved" : "📝 Notes";
+        if (!text.trim() && !url.trim()) {
+          delete notes[task.id];
+          saveStore("cf_assignment_notes", notes);
+          showToast("Assignment notes cleared.");
+          return;
+        }
 
         if (url.trim()) {
           try {
-            const parsed = new URL(url);
-            if (parsed.protocol === "https:" || parsed.protocol === "http:") {
-              showToast("Notes saved! Open the Notes button to view your link.");
-            } else {
-              showToast("Notes saved. Use an http or https link for resources.");
+            const parsed = new URL(url.trim());
+            if (!["http:", "https:"].includes(parsed.protocol)) {
+              showToast("Notes saved. Resource links must start with http:// or https://.");
+              return;
             }
           } catch {
-            showToast("Notes saved. The resource URL doesn't look valid yet.");
+            showToast("Notes saved, but the resource URL is not valid.");
+            return;
           }
-        } else {
-          showToast("Assignment notes saved!");
         }
+        showToast("Assignment notes saved!");
       });
 
       row.appendChild(button);
-
-      if (notes[task.id] &&
-          (notes[task.id].text || notes[task.id].url)) {
+      if (notes[task.id] && (notes[task.id].text || notes[task.id].url)) {
         button.textContent = "📝 Saved";
       }
     });
   }
 
-  // XP and study streaks
   function recordCompletions() {
     tasks.forEach(task => {
       if (task.done && !earned.includes(String(task.id))) {
@@ -1191,75 +1140,129 @@ if (suggestionBox) {
     saveStore("cf_earned_tasks", earned);
   }
 
-  // Capture completion before the existing checkbox handler rerenders tasks
-  taskList.addEventListener("change", event => {
-    if (!event.target.matches('input[type="checkbox"]')) return;
-
-    const row = event.target.closest("*");
-    const taskRow = event.target.parentElement;
-    const task = getTask(taskRow) || getTask(row);
-
-    if (event.target.checked) {
-      const completedTask = task || tasks.find(t =>
-        [...taskList.children].some(r =>
-          r.innerText.includes(t.title) && r.contains(event.target)
-        )
-      );
-
-      if (completedTask) {
-        const id = String(completedTask.id);
-        if (!earned.includes(id)) earned.push(id);
-        if (!studyDates.includes(today())) studyDates.push(today());
-
-        saveStore("cf_earned_tasks", earned);
-        saveStore("cf_study_dates", studyDates);
-      }
-    }
-
-    setTimeout(updatePlusDashboard, 0);
-  }, true);
-
   function calculateStreak() {
     const dates = new Set(studyDates);
-    let count = 0;
     const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    if (!dates.has(getTodayKey())) date.setDate(date.getDate() - 1);
 
-    // A streak can continue if the student last studied yesterday.
-    if (!dates.has(today())) date.setDate(date.getDate() - 1);
-
-    while (dates.has(date.toLocaleDateString("en-CA"))) {
+    let count = 0;
+    while (true) {
+      const key = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+      ].join("-");
+      if (!dates.has(key)) break;
       count++;
       date.setDate(date.getDate() - 1);
     }
     return count;
   }
 
+  function updateWeeklyReport() {
+    const completed = tasks.filter(task => task.done).length;
+    const pending = tasks.filter(task => !task.done).length;
+    const rate = tasks.length ? Math.round(completed / tasks.length * 100) : 0;
+    let grade = "D";
+    if (rate >= 90) grade = "A+";
+    else if (rate >= 75) grade = "A";
+    else if (rate >= 60) grade = "B";
+    else if (rate >= 40) grade = "C";
+
+    const box = $("cfWeeklyReport");
+    box.replaceChildren();
+    const gradeElement = document.createElement("div");
+    gradeElement.className = "cf-grade";
+    gradeElement.textContent = grade;
+    const completedElement = document.createElement("p");
+    completedElement.textContent = `${completed} completed`;
+    const pendingElement = document.createElement("p");
+    pendingElement.textContent = `${pending} pending`;
+    const rateElement = document.createElement("p");
+    rateElement.textContent = `Overall completion: ${rate}%`;
+    box.append(gradeElement, completedElement, pendingElement, rateElement);
+  }
+
+  function updateTimeline() {
+    const box = $("cfTimeline");
+    box.replaceChildren();
+    const upcoming = tasks.filter(task => !task.done)
+      .sort((a, b) => a.due.localeCompare(b.due)).slice(0, 5);
+
+    if (!upcoming.length) {
+      box.textContent = "🎉 No pending assignments!";
+      return;
+    }
+
+    upcoming.forEach(task => {
+      const item = document.createElement("div");
+      item.className = "cf-timeline-item";
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      const content = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = task.title;
+      const details = document.createElement("p");
+      details.textContent = `${task.subject} • ${formatDate(task.due)}`;
+      content.append(title, details);
+      item.append(dot, content);
+      box.appendChild(item);
+    });
+  }
+
+  function updateSuggestions() {
+    const box = $("cfAISuggestions");
+    box.replaceChildren();
+    const pending = tasks.filter(task => !task.done)
+      .sort((a, b) => a.due.localeCompare(b.due));
+
+    if (!pending.length) {
+      box.textContent = "🎉 Amazing! All assignments are completed.";
+      return;
+    }
+
+    const nearest = pending[0];
+    const highPriority = pending.find(task => task.priority === "High");
+    const tips = [
+      ["Today's Priority", `Work on ${nearest.title} (${nearest.subject}), due ${formatDate(nearest.due)}.`],
+      ["Remaining Tasks", `You have ${pending.length} assignment${pending.length === 1 ? "" : "s"} left.`],
+      ["Productivity Tip", highPriority
+        ? `Try finishing the high-priority task: ${highPriority.title}.`
+        : "Break your next assignment into small, manageable steps."]
+    ];
+
+    tips.forEach(([headingText, message]) => {
+      const tip = document.createElement("div");
+      tip.className = "cf-tip";
+      const heading = document.createElement("strong");
+      heading.textContent = headingText;
+      const paragraph = document.createElement("p");
+      paragraph.textContent = message;
+      tip.append(heading, paragraph);
+      box.appendChild(tip);
+    });
+  }
+
   function updatePlusDashboard() {
     recordCompletions();
-
-    document.getElementById("cfWelcome").textContent =
-      `Hey, ${profile.name} 👋`;
+    $("cfWelcome").textContent = `Hey, ${profile.name || "Student"} 👋`;
 
     const xp = earned.length * 25;
     const streak = calculateStreak();
-    const completed = tasks.filter(t => t.done).length;
-
+    const completed = tasks.filter(task => task.done).length;
     const badgeCount = [
-      completed >= 1,
-      completed >= 5,
-      completed >= 10,
-      streak >= 3,
-      streak >= 7,
-      xp >= 500
+      completed >= 1, completed >= 5, completed >= 10,
+      streak >= 3, streak >= 7, xp >= 500
     ].filter(Boolean).length;
 
-    document.getElementById("cfXP").textContent = xp;
-    document.getElementById("cfStreak").textContent = streak;
-    document.getElementById("cfBadges").textContent = badgeCount;
+    $("cfXP").textContent = xp;
+    $("cfStreak").textContent = streak;
+    $("cfBadges").textContent = badgeCount;
 
-    const chart = document.getElementById("cfSubjectChart");
+    const chart = $("cfSubjectChart");
+    chart.replaceChildren();
     const groups = {};
-
     tasks.forEach(task => {
       const subject = task.subject || "Other";
       if (!groups[subject]) groups[subject] = { total: 0, completed: 0 };
@@ -1267,33 +1270,22 @@ if (suggestionBox) {
       if (task.done) groups[subject].completed++;
     });
 
-    chart.innerHTML = "";
-
-    Object.entries(groups).forEach(([subject, data]) => {
-      const percent = data.total
-        ? Math.round(data.completed / data.total * 100) : 0;
-
+    Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)).forEach(([subject, data]) => {
+      const percent = Math.round(data.completed / data.total * 100);
       const item = document.createElement("div");
       item.className = "cf-subject-row";
-
       const heading = document.createElement("div");
       heading.className = "cf-subject-heading";
-
       const name = document.createElement("span");
       name.textContent = subject;
-
       const count = document.createElement("span");
       count.textContent = `${data.completed}/${data.total} · ${percent}%`;
-
       heading.append(name, count);
-
       const track = document.createElement("div");
       track.className = "cf-chart-track";
-
       const bar = document.createElement("div");
       bar.className = "cf-chart-bar";
-      bar.style.width = percent + "%";
-
+      bar.style.width = `${percent}%`;
       track.appendChild(bar);
       item.append(heading, track);
       chart.appendChild(item);
@@ -1303,69 +1295,41 @@ if (suggestionBox) {
       chart.textContent = "Add assignments to see your subject analytics.";
     }
 
-    updateSubjectOptions();
+    updatePlusSubjectOptions();
     applyPlusFilters();
     addNotesButtons();
+    updateWeeklyReport();
+    updateTimeline();
+    updateSuggestions();
   }
 
-  // Watch the existing renderer when it refreshes the assignment list
+  // Record study activity before the main checkbox handler redraws the task list.
+  taskList.addEventListener("change", event => {
+    if (!event.target.matches('input[type="checkbox"]') || !event.target.checked) return;
+    const row = event.target.closest(".task");
+    const task = row ? getTask(row) : null;
+    if (task) {
+      const id = String(task.id);
+      if (!earned.includes(id)) earned.push(id);
+      const todayKey = getTodayKey();
+      if (!studyDates.includes(todayKey)) studyDates.push(todayKey);
+      saveStore("cf_earned_tasks", earned);
+      saveStore("cf_study_dates", studyDates);
+    }
+    setTimeout(updatePlusDashboard, 0);
+  }, true);
+
   const observer = new MutationObserver(() => {
     addNotesButtons();
     applyPlusFilters();
+    updatePlusDashboard();
   });
-
   observer.observe(taskList, { childList: true, subtree: true });
 
   updatePlusDashboard();
 }
 
-const reportBox=document.getElementById("cfWeeklyReport");
-
-if(reportBox){
-
-const completed=tasks.filter(t=>t.done).length;
-const pending=tasks.filter(t=>!t.done).length;
-
-const rate=tasks.length
-?Math.round(completed/tasks.length*100)
-:0;
-
-let grade="D";
-
-if(rate>=90) grade="A+";
-else if(rate>=75) grade="A";
-else if(rate>=60) grade="B";
-else if(rate>=40) grade="C";
-
-reportBox.innerHTML=`
-<div class="cf-grade">${grade}</div>
-<p><b>${completed}</b> completed</p>
-<p><b>${pending}</b> pending</p>
-<p>Completion: <b>${rate}%</b></p>`;
-}
-
-const timelineBox=document.getElementById("cfTimeline");
-
-if(timelineBox){
-
-timelineBox.innerHTML="";
-
-tasks
-.filter(t=>!t.done)
-.sort((a,b)=>a.due.localeCompare(b.due))
-.slice(0,5)
-.forEach(task=>{
-
-timelineBox.innerHTML+=`
-<div class="cf-timeline-item">
-<div class="dot"></div>
-<div>
-<strong>${task.title}</strong>
-<p>${task.subject} • ${task.due}</p>
-</div>
-</div>`;
-});
-}
+// ===== START CAMPUSFLOW =====
 
 setupAdvancedUI();
 setupProductivityHub();
@@ -1373,18 +1337,15 @@ setupTaskTools();
 setupCampusFlowPlus();
 render();
 
-// Confetti animation
+// Confetti animation helper
 function launchConfetti() {
-    for (let i = 0; i < 30; i++) {
-        const piece = document.createElement("div");
-
-        piece.className = "confetti";
-        piece.style.left = Math.random() * 100 + "vw";
-        piece.style.background = `hsl(${Math.random() * 360},80%,65%)`;
-        piece.style.animationDelay = Math.random() + "s";
-
-        document.body.appendChild(piece);
-
-        setTimeout(() => piece.remove(), 2500);
-    }
+  for (let i = 0; i < 30; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti";
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = `hsl(${Math.random() * 360}, 80%, 65%)`;
+    piece.style.animationDelay = Math.random() + "s";
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 2500);
+  }
 }
