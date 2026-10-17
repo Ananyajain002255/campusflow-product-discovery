@@ -217,6 +217,65 @@ function renderAnalytics(percentage) {
   });
 }
 
+
+function editTask(task) {
+  const title = prompt("Edit assignment name:", task.title);
+  if (title === null) return;
+
+  const subject = prompt("Edit subject:", task.subject);
+  if (subject === null) return;
+
+  const due = prompt("Edit due date (YYYY-MM-DD):", task.due);
+  if (due === null) return;
+
+  const priority = prompt(
+    "Enter priority: High, Medium, or Low",
+    task.priority
+  );
+  if (priority === null) return;
+
+  const cleanTitle = title.trim();
+  const cleanSubject = subject.trim();
+  const cleanPriority = priority.trim().toLowerCase();
+  const validPriorities = ["high", "medium", "low"];
+
+  if (!cleanTitle || !cleanSubject) {
+    showToast("Name and subject cannot be empty.");
+    return;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due) ||
+      Number.isNaN(new Date(due + "T00:00:00").getTime())) {
+    showToast("Please enter a valid date in YYYY-MM-DD format.");
+    return;
+  }
+
+  if (!validPriorities.includes(cleanPriority)) {
+    showToast("Priority must be High, Medium, or Low.");
+    return;
+  }
+
+  task.title = cleanTitle;
+  task.subject = cleanSubject;
+  task.due = due;
+  task.priority = cleanPriority.charAt(0).toUpperCase() +
+    cleanPriority.slice(1);
+
+  render();
+  showToast("Assignment updated successfully! ✨");
+}
+
+function deleteTask(task) {
+  if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) {
+    return;
+  }
+
+  tasks = tasks.filter(item => item.id !== task.id);
+  render();
+  showToast("Assignment deleted.");
+}
+
+
 function render() {
   saveTasks();
   updateSubjectOptions();
@@ -330,8 +389,27 @@ function render() {
       if (days <= 3) due.classList.add("cf-due-soon");
     }
 
-    row.append(checkbox, info, priority, due);
-    list.appendChild(row);
+    
+const actions = document.createElement("div");
+actions.className = "cf-task-actions";
+
+const editButton = document.createElement("button");
+editButton.type = "button";
+editButton.className = "cf-edit-btn";
+editButton.textContent = "✏️ Edit";
+editButton.setAttribute("aria-label", "Edit " + task.title);
+editButton.addEventListener("click", () => editTask(task));
+
+const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.className = "cf-delete-btn";
+deleteButton.textContent = "🗑 Delete";
+deleteButton.setAttribute("aria-label", "Delete " + task.title);
+deleteButton.addEventListener("click", () => deleteTask(task));
+
+actions.append(editButton, deleteButton);
+row.append(checkbox, info, priority, due, actions);
+list.appendChild(row);
   });
 }
 
@@ -396,5 +474,79 @@ document.querySelectorAll(".tab").forEach(button => {
   });
 });
 
+
+function setupTaskTools() {
+  const heading = document.querySelector(".panel-heading");
+  if (!heading || $("cfTaskTools")) return;
+
+  const tools = document.createElement("div");
+  tools.id = "cfTaskTools";
+  tools.className = "cf-task-tools";
+
+  const exportButton = document.createElement("button");
+  exportButton.type = "button";
+  exportButton.className = "cf-export-btn";
+  exportButton.textContent = "⬇ Export CSV";
+
+  exportButton.addEventListener("click", () => {
+    const columns = ["Assignment", "Subject", "Due Date", "Priority", "Status"];
+    const rows = tasks.map(task => [
+      task.title,
+      task.subject,
+      task.due,
+      task.priority,
+      task.done ? "Completed" : "Pending"
+    ]);
+
+    const escapeCSV = value =>
+      '"' + String(value).replace(/"/g, '""') + '"';
+
+    const csv = [columns, ...rows]
+      .map(row => row.map(escapeCSV).join(","))
+      .join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "CampusFlow_Assignments.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    showToast("Assignment report downloaded! 📄");
+  });
+
+  const clearButton = document.createElement("button");
+  clearButton.type = "button";
+  clearButton.className = "cf-clear-btn";
+  clearButton.textContent = "✓ Clear Completed";
+
+  clearButton.addEventListener("click", () => {
+    const completedCount = tasks.filter(task => task.done).length;
+
+    if (!completedCount) {
+      showToast("No completed assignments to clear.");
+      return;
+    }
+
+    if (!confirm(`Remove all ${completedCount} completed assignment(s)?`)) {
+      return;
+    }
+
+    tasks = tasks.filter(task => !task.done);
+    render();
+    showToast("Completed assignments cleared.");
+  });
+
+  tools.append(exportButton, clearButton);
+  heading.appendChild(tools);
+}
+
 setupAdvancedUI();
+setupTaskTools();
 render();
