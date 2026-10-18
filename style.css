@@ -373,3 +373,188 @@ body.dark-mode .cf-signature-ring strong { color: #e0ccff; }
 body.dark-mode .cf-signature-shortcuts kbd { background: #302641; border-color: #493b5d; color: #e0ccff; }
 @media (max-width: 700px) { .cf-signature-hero { grid-template-columns: 1fr; padding: 24px 20px; gap: 22px; } .cf-signature-progress { grid-row: 1; justify-items: start; grid-template-columns: auto 1fr; align-items: center; } .cf-signature-ring { width: 94px; height: 94px; } .cf-signature-ring > div { width: 76px; height: 76px; } .cf-signature-ring strong { font-size: 23px; } .cf-signature-progress > p { text-align: left; } .cf-signature-grid { grid-template-columns: 1fr; } .cf-signature-card { padding: 18px; } .cf-signature-shortcuts { margin-left: 0; width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .cf-signature *, .cf-signature *::before, .cf-signature *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+
+/* CampusFlow AI companion — scoped additions; existing lavender theme remains unchanged */
+.cf-ai-suite{max-width:1100px;margin:0 auto 54px;padding:0 20px;color:var(--ink,#28243b)}
+.cf-ai-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:12px 0 18px;padding:24px;border:1px solid var(--border,#e9e5f5);border-radius:22px;background:linear-gradient(135deg,#f6f3ff 0%,#fff 75%)}
+.cf-ai-eyebrow{margin:0 0 7px;font-size:11px;font-weight:800;letter-spacing:1.7px;color:var(--purple,#7763d8)}
+.cf-ai-hero h2{margin:0 0 8px;font-size:clamp(23px,3vw,30px)}
+.cf-ai-hero p:not(.cf-ai-eyebrow){max-width:700px;margin:0;color:var(--muted,#77748b);line-height:1.6}
+.cf-ai-status{display:flex;align-items:center;gap:8px;border:1px solid var(--border,#e9e5f5);background:white;border-radius:30px;padding:9px 12px;font-size:12px;color:var(--muted,#77748b)}
+.cf-ai-dot{width:8px;height:8px;display:inline-block;border-radius:50%;background:#d9a441}.cf-ai-status.is-online .cf-ai-dot{background:#28a879}.cf-ai-status.is-error .cf-ai-dot{background:#d45b67}
+.cf-ai-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.cf-ai-card{min-width:0;background:var(--card,#fff);border:1px solid var(--border,#e9e5f5);border-radius:20px;padding:22px;box-shadow:0 10px 28px rgba(75,54,135,.045)}
+.cf-ai-card h3{font-size:18px;margin:0 0 7px}.cf-ai-sub{font-size:13px;line-height:1.55;color:var(--muted,#77748b);margin:0 0 15px}
+.cf-ai-chips,.cf-ai-tools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.cf-ai-chip,.cf-ai-tool{border:1px solid var(--border,#e9e5f5);background:#faf9ff;color:var(--ink,#28243b);border-radius:11px;padding:9px 11px;font-size:12px;text-align:left}
+.cf-ai-chip:hover,.cf-ai-tool:hover{border-color:var(--purple,#7763d8);background:#f3efff}
+.cf-ai-chatlog{height:260px;overflow:auto;padding:12px;border:1px solid var(--border,#e9e5f5);border-radius:14px;background:#fcfbff;margin-bottom:12px}
+.cf-ai-msg{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:13px;padding:11px 12px;border-radius:13px;margin:0 0 10px;max-width:95%}
+.cf-ai-msg.bot{background:#f0edff;color:#31284f;margin-right:auto}.cf-ai-msg.user{background:var(--purple,#7763d8);color:white;margin-left:auto}
+.cf-ai-chatrow{display:flex;gap:8px}.cf-ai-input{width:100%;min-width:0;padding:11px 12px;border:1px solid var(--border,#e9e5f5);border-radius:11px;background:white;color:#28243b;outline:none}.cf-ai-input:focus{border-color:var(--purple,#7763d8);box-shadow:0 0 0 3px rgba(119,99,216,.12)}
+.cf-ai-btn{border:0;background:var(--purple,#7763d8);color:white;border-radius:11px;padding:10px 14px;font-weight:700;white-space:nowrap}.cf-ai-btn:disabled{opacity:.6;cursor:wait}.cf-ai-btn.alt{background:#eeeaff;color:#6551c5;margin-top:10px}
+.cf-ai-url{margin-top:14px;font-size:12px;color:var(--muted,#77748b)}.cf-ai-url summary{cursor:pointer;margin-bottom:9px}.cf-ai-url input{margin:0 0 8px}.cf-ai-note{font-size:11px;line-height:1.5;color:var(--muted,#77748b);margin:12px 0 0}
+.cf-ai-field label{display:block;font-size:12px;font-weight:700;margin:0 0 7px}.cf-ai-field textarea{resize:vertical;min-height:130px;line-height:1.5}
+.cf-ai-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}.cf-ai-tool{display:flex;flex-direction:column;gap:5px;padding:12px}.cf-ai-tool strong{font-size:12px}.cf-ai-tool span{font-size:11px;line-height:1.4;color:var(--muted,#77748b)}
+.cf-ai-output{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;font-size:13px;background:#fcfbff;border:1px solid var(--border,#e9e5f5);border-radius:13px;padding:14px;min-height:90px;max-height:440px;overflow:auto;color:var(--ink,#28243b)}
+.cf-ai-tools-status{font-size:12px;min-height:18px;margin:9px 0;color:var(--purple,#7763d8)}
+body.dark-mode .cf-ai-hero,body.dark-mode .cf-ai-card{background:var(--card,#211e31);color:var(--ink,#f4f1ff)}
+body.dark-mode .cf-ai-status,body.dark-mode .cf-ai-input,body.dark-mode .cf-ai-chatlog,body.dark-mode .cf-ai-output{background:#191626;color:#f4f1ff}
+body.dark-mode .cf-ai-chip,body.dark-mode .cf-ai-tool{background:#29243e;color:#f4f1ff}
+body.dark-mode .cf-ai-msg.bot{background:#332b50;color:#f4f1ff}
+@media(max-width:760px){.cf-ai-grid{grid-template-columns:1fr}.cf-ai-hero{padding:18px}.cf-ai-card{padding:16px}.cf-ai-chatrow{align-items:stretch}.cf-ai-btn{padding:10px}.cf-ai-suite{padding:0 14px}}
+
+
+/* ===== FOUR AI FEATURES — PREMIUM LAVENDER FINISH ===== */
+/* These styles are scoped to .cf-ai-* so the existing CampusFlow layout stays intact. */
+.cf-ai-suite {
+  position: relative;
+  isolation: isolate;
+  margin-top: 30px;
+}
+.cf-ai-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border-color: #e5d9fa;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(255,255,255,.95), transparent 25%),
+    linear-gradient(125deg, #eee5ff 0%, #fbf8ff 54%, #eaf0ff 100%);
+  box-shadow: 0 14px 38px rgba(101,75,153,.09), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.cf-ai-hero::after {
+  content: "✦";
+  position: absolute;
+  right: 28px;
+  top: 14px;
+  color: rgba(137, 102, 198, .2);
+  font-size: 42px;
+  pointer-events: none;
+}
+.cf-ai-eyebrow { color: #8a64c6; }
+.cf-ai-hero h2 { color: #382650; letter-spacing: -.6px; }
+.cf-ai-status { position: relative; z-index: 1; box-shadow: 0 4px 12px rgba(80,55,120,.05); }
+.cf-ai-grid { align-items: stretch; gap: 18px; }
+.cf-ai-card {
+  display: flex;
+  flex-direction: column;
+  border-color: #e8def7;
+  border-radius: 21px;
+  background: linear-gradient(155deg, #fff 0%, #fdfbff 100%);
+  box-shadow: 0 10px 28px rgba(75,54,135,.055);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.cf-ai-card:hover { border-color: #d9c8f4; box-shadow: 0 14px 32px rgba(75,54,135,.085); }
+.cf-ai-card h3 { color: #44305f; letter-spacing: -.25px; }
+.cf-ai-sub { min-height: 40px; }
+.cf-ai-chips { gap: 7px; }
+.cf-ai-chip {
+  border-color: #e4d9f6;
+  background: #f8f4ff;
+  color: #684a9c;
+  font-weight: 650;
+  transition: background .18s ease, transform .18s ease, border-color .18s ease;
+}
+.cf-ai-chip:hover { transform: translateY(-1px); border-color: #bda5e8; background: #f0e8ff; }
+.cf-ai-chatlog {
+  flex: 1 0 auto;
+  min-height: 240px;
+  border-color: #e8e0f5;
+  background: linear-gradient(180deg, #fcfaff, #f8f5ff);
+  scrollbar-color: #c9b5ed transparent;
+}
+.cf-ai-msg { box-shadow: 0 2px 6px rgba(60,40,95,.035); }
+.cf-ai-msg.bot { border: 1px solid #e8dffc; background: linear-gradient(135deg, #f3edff, #f9f6ff); }
+.cf-ai-msg.user { background: linear-gradient(135deg, #7953bd, #9875d5); }
+.cf-ai-chatrow { align-items: stretch; }
+.cf-ai-input { transition: border-color .18s ease, box-shadow .18s ease; }
+.cf-ai-input::placeholder { color: #a49ab2; }
+.cf-ai-btn { transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
+.cf-ai-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(111,73,177,.2); }
+.cf-ai-btn.alt { border: 1px solid #e0d3f5; background: #f2ebff; color: #6846a5; }
+.cf-ai-btn.alt:hover { background: #e9ddff; }
+.cf-ai-url { padding: 11px 12px; border: 1px solid #eee7f8; border-radius: 12px; background: #fdfbff; }
+.cf-ai-url summary { color: #7653ad; font-weight: 700; }
+.cf-ai-note { color: #8d819c; }
+.cf-ai-field textarea { min-height: 145px; }
+.cf-ai-tools { gap: 9px; }
+.cf-ai-tool {
+  min-height: 84px;
+  border-color: #e8def7;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #fff, #f9f5ff);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.cf-ai-tool strong { color: #60428e; line-height: 1.45; }
+.cf-ai-tool span { color: #887b99; }
+.cf-ai-tool:hover { transform: translateY(-2px); box-shadow: 0 7px 16px rgba(85,59,129,.08); }
+.cf-ai-tool:disabled { opacity: .65; cursor: wait; transform: none; }
+.cf-ai-tools-status { padding: 2px 1px; font-weight: 650; }
+.cf-ai-output {
+  min-height: 150px;
+  max-height: 460px;
+  border-color: #e7def5;
+  background: linear-gradient(180deg, #fdfbff, #f8f5ff);
+  box-shadow: inset 0 1px 2px rgba(80,55,120,.025);
+  scrollbar-color: #c9b5ed transparent;
+}
+.cf-ai-output:empty::before { content: "Your AI-generated result will appear here."; color: #a49ab2; }
+.cf-ai-suite button:focus-visible,
+.cf-ai-suite input:focus-visible,
+.cf-ai-suite textarea:focus-visible,
+.cf-ai-suite summary:focus-visible { outline: 3px solid #bda5e8; outline-offset: 3px; }
+
+/* Dark mode support for the AI study assistant and all three AI tools */
+body.dark-mode .cf-ai-hero {
+  background: radial-gradient(circle at 92% 12%, rgba(139,108,181,.16), transparent 27%), linear-gradient(125deg, #30243f, #262136 58%, #252a40);
+  border-color: #49365f;
+}
+body.dark-mode .cf-ai-hero h2,
+body.dark-mode .cf-ai-card h3 { color: #f0e7ff; }
+body.dark-mode .cf-ai-hero p:not(.cf-ai-eyebrow),
+body.dark-mode .cf-ai-sub,
+body.dark-mode .cf-ai-note,
+body.dark-mode .cf-ai-tool span { color: #c3b4d5; }
+body.dark-mode .cf-ai-card { background: linear-gradient(155deg, #292137, #241d30); border-color: #443452; }
+body.dark-mode .cf-ai-chip,
+body.dark-mode .cf-ai-tool { background: #302641; color: #eee4fc; border-color: #493b5d; }
+body.dark-mode .cf-ai-tool strong,
+body.dark-mode .cf-ai-url summary { color: #e1d0ff; }
+body.dark-mode .cf-ai-url { background: #292137; border-color: #443452; }
+body.dark-mode .cf-ai-chatlog,
+body.dark-mode .cf-ai-output { background: #1e192b; border-color: #493b5d; color: #f4f1ff; }
+body.dark-mode .cf-ai-input { background: #302641; border-color: #493b5d; color: #f4f1ff; }
+body.dark-mode .cf-ai-msg.bot { background: #332b50; border-color: #493b5d; color: #f4f1ff; }
+body.dark-mode .cf-ai-btn.alt { background: #3a2c4e; color: #e7d9ff; border-color: #57446d; }
+body.dark-mode .cf-ai-status { background: #302641; border-color: #493b5d; color: #ded2ed; }
+
+@media (max-width: 760px) {
+  .cf-ai-suite { margin-top: 24px; }
+  .cf-ai-hero { align-items: flex-start; padding: 20px 17px; border-radius: 18px; }
+  .cf-ai-hero::after { right: 12px; top: 6px; font-size: 30px; }
+  .cf-ai-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .cf-ai-card { padding: 17px; border-radius: 17px; }
+  .cf-ai-sub { min-height: 0; }
+  .cf-ai-chatlog { min-height: 210px; height: 250px; }
+  .cf-ai-tools { grid-template-columns: minmax(0, 1fr); }
+  .cf-ai-tool { min-height: 0; }
+}
+@media (max-width: 420px) {
+  .cf-ai-chatrow { flex-direction: column; }
+  .cf-ai-chatrow .cf-ai-btn { width: 100%; }
+  .cf-ai-status { max-width: 100%; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-ai-card, .cf-ai-chip, .cf-ai-btn, .cf-ai-tool { transition: none !important; }
+}
+
+/* Personalized AI planner inputs — scoped additions, preserving the lavender theme */
+.cf-ai-planner-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 8px;padding:14px;border:1px solid #eee6fa;border-radius:15px;background:linear-gradient(135deg,#fdfbff,#f8f4ff)}
+.cf-ai-planner-fields .cf-ai-field{min-width:0}
+.cf-ai-planner-fields .cf-ai-input{display:block;margin-top:7px}
+.cf-ai-planner-fields label{display:block;font-size:12px;font-weight:750;color:#65517e}
+.cf-ai-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.dark-mode .cf-ai-planner-fields{background:#241d31;border-color:#443458}
+body.dark-mode .cf-ai-planner-fields label{color:#e0d2f6}
+@media(max-width:520px){.cf-ai-planner-fields{grid-template-columns:1fr;padding:11px}.cf-ai-tools{grid-template-columns:1fr}}
