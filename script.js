@@ -83,14 +83,13 @@ function setupAdvancedUI() {
 
     button.addEventListener("click", () => {
       const dark = document.body.classList.toggle("dark-mode");
-      try { localStorage.setItem("campusflow_theme", dark ? "dark" : "light"); } catch (error) { console.warn("Could not save theme preference.", error); }
+      localStorage.setItem("campusflow_theme", dark ? "dark" : "light");
       button.textContent = dark ? "☀️ Light mode" : "🌙 Dark mode";
       showToast(dark ? "Dark mode enabled" : "Light mode enabled");
     });
   }
 
-  let darkSaved = false;
-  try { darkSaved = localStorage.getItem("campusflow_theme") === "dark"; } catch (error) { console.warn("Could not read theme preference.", error); }
+  const darkSaved = localStorage.getItem("campusflow_theme") === "dark";
   document.body.classList.toggle("dark-mode", darkSaved);
   if ($("themeToggle")) {
     $("themeToggle").textContent = darkSaved ? "☀️ Light mode" : "🌙 Dark mode";
@@ -1549,8 +1548,6 @@ function launchConfetti() {
     const list = document.getElementById("taskList");
     if (!list || list.dataset.cfSignatureWatching) return;
     list.dataset.cfSignatureWatching = "true";
-    // Capture the change before the main task handler redraws/removes the row.
-    // Without capture=true, the checkbox can be detached before this listener runs.
     list.addEventListener("change", event => {
       if (!event.target.matches('input[type="checkbox"]')) return;
       const row = event.target.closest(".task");
@@ -1566,7 +1563,7 @@ function launchConfetti() {
         }
       }
       setTimeout(renderSignature, 80);
-    }, true);
+    });
   }
 
   document.addEventListener("keydown", event => {
@@ -1599,4 +1596,83 @@ function launchConfetti() {
   }
   // Keep the greeting fresh if the page stays open across the day.
   renderSignature();
+})();
+
+
+
+/* CampusFlow real AI frontend — calls the secure Node backend; never stores an API key here. */
+(function campusFlowAI() {
+  const $ = id => document.getElementById(id);
+  const baseKey = 'cf_ai_server_url';
+  const cleanBase = value => String(value || '').trim().replace(/\/+$/, '');
+  let busy = false;
+  const getBase = () => cleanBase(localStorage.getItem(baseKey) || '');
+  function setStatus(text, ready=false) {
+    const status = $('cfAiStatus'), label = $('cfAiStatusText');
+    if (label) label.textContent = text;
+    if (status) status.classList.toggle('ready', !!ready);
+  }
+  function addMessage(text, role='bot', isError=false) {
+    const log = $('cfAiChatLog'); if (!log) return;
+    const node = document.createElement('div'); node.className = `cf-ai-msg ${role}${isError?' error':''}`;
+    node.textContent = text; log.appendChild(node); log.scrollTop = log.scrollHeight;
+  }
+  function taskContext() {
+    let list = [];
+    try { if (typeof tasks !== 'undefined' && Array.isArray(tasks)) list = tasks; } catch (_) {}
+    return list.map(t => ({title:t.title, subject:t.subject, due:t.due, priority:t.priority, completed:!!(t.done || t.completed)}));
+  }
+  async function requestAI(mode, message, context='') {
+    const base = getBase();
+    const url = `${base}/api/ai`;
+    const response = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,message,context})});
+    let data = {};
+    try { data = await response.json(); } catch (_) {}
+    if (!response.ok) throw new Error(data.error || `AI request failed (${response.status}).`);
+    if (!data.answer) throw new Error('AI returned an empty response. Please try again.');
+    return data.answer;
+  }
+  async function checkConnection() {
+    try {
+      const response = await fetch(`${getBase()}/api/health`);
+      const data = await response.json();
+      if (data.ok && data.aiConfigured) setStatus(`AI connected · ${data.model}`, true);
+      else setStatus('Server found · API key needed', false);
+    } catch (_) { setStatus('AI server not connected yet', false); }
+  }
+  async function chat(message) {
+    if (busy) return;
+    busy = true; const send = $('cfAiSend'); if (send) { send.disabled=true; send.textContent='Thinking…'; }
+    addMessage(message,'user');
+    const input = $('cfAiMessage'); if (input) input.value='';
+    setStatus('AI is thinking…', false);
+    try { const answer = await requestAI('chat', message, JSON.stringify(taskContext())); addMessage(answer,'bot'); setStatus('AI response received',true); }
+    catch (error) { addMessage(`I couldn't connect to the AI right now. ${error.message}\n\nCheck that your backend is running, the server URL is correct, and the API key is configured.`, 'bot', true); setStatus('AI needs setup',false); }
+    finally { busy=false; if (send) { send.disabled=false; send.textContent='Send ↗'; } }
+  }
+  async function runTool(mode) {
+    if (busy) return;
+    const notes = ($('cfAiNotes')?.value || '').trim();
+    if ((mode==='summarize' || mode==='quiz') && !notes) { $('cfAiToolStatus').textContent='Please paste your notes or enter a topic first.'; $('cfAiNotes')?.focus(); return; }
+    const status=$('cfAiToolStatus'), output=$('cfAiToolOutput');
+    busy=true; status.textContent='AI is working on your request…'; output.textContent='Generating…';
+    document.querySelectorAll('[data-cf-mode]').forEach(b=>b.disabled=true);
+    let context = '';
+    if (mode==='plan' || mode==='coach') context = JSON.stringify({tasks:taskContext(), notes});
+    else context = notes;
+    const message = mode==='summarize' ? 'Summarize these notes for revision.' : mode==='quiz' ? 'Generate a practice quiz from these notes.' : mode==='plan' ? 'Build my study plan using my pending tasks and the notes/time constraints supplied.' : 'Review my current tasks and help me improve my productivity.';
+    try { output.textContent=await requestAI(mode,message,context); status.textContent='Done — generated by the AI model ✨'; }
+    catch(error) { output.textContent=`Could not generate a response. ${error.message}\n\nMake sure the backend is deployed and its API key is configured.`; status.textContent='AI setup required'; }
+    finally { busy=false; document.querySelectorAll('[data-cf-mode]').forEach(b=>b.disabled=false); }
+  }
+  function init() {
+    const urlInput=$('cfAiBaseUrl'); if (urlInput) urlInput.value=getBase();
+    $('cfAiChatForm')?.addEventListener('submit',e=>{e.preventDefault();const message=$('cfAiMessage')?.value.trim();if(message)chat(message);});
+    document.querySelectorAll('[data-cf-prompt]').forEach(button=>button.addEventListener('click',()=>{const input=$('cfAiMessage');input.value=button.dataset.cfPrompt;input.focus();}));
+    document.querySelectorAll('[data-cf-mode]').forEach(button=>button.addEventListener('click',()=>runTool(button.dataset.cfMode)));
+    $('cfAiSaveUrl')?.addEventListener('click',()=>{const value=cleanBase($('cfAiBaseUrl')?.value);if(value && !/^https?:\/\//i.test(value)){ $('cfAiToolStatus').textContent='Server URL should start with https:// or http://';return;}try{if(value)localStorage.setItem(baseKey,value);else localStorage.removeItem(baseKey);}catch(_){} $('cfAiToolStatus').textContent='AI server URL saved in this browser.';checkConnection();});
+    $('cfAiCopyOutput')?.addEventListener('click',async()=>{const value=$('cfAiToolOutput')?.textContent||'';try{await navigator.clipboard.writeText(value);$('cfAiToolStatus').textContent='Result copied to clipboard.';}catch(_){$('cfAiToolStatus').textContent='Clipboard unavailable; select and copy the result manually.';}});
+    checkConnection();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
