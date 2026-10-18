@@ -49,6 +49,7 @@ app.post('/api/ai', async (req, res) => {
       model,
       instructions: `${instructions}\n\nCurrent feature: ${modeInstructions[mode]}`,
       input: `Student request:\n${cleanMessage || '(Use the provided context to complete the selected task.)'}\n\nCampusFlow context (may be empty):\n${cleanContext || '(none)'}`,
+      ...(mode === 'chat' ? { tools: [{ type: 'web_search' }] } : {}),
       max_output_tokens: 1400
     });
     const answer = response.output_text?.trim();
