@@ -1,13 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CampusFlow | Student Assignment Tracker</title>
-
+<title>CampusFlow | Premium Student Productivity</title>
 <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
 <header>
@@ -78,6 +75,36 @@
   </section>
 </main>
 
+
+<section class="cf-ai-suite" id="campusFlowAISuite" aria-labelledby="cfAiHeading">
+  <div class="cf-ai-hero">
+    <div><p class="cf-ai-eyebrow">CAMPUSFLOW INTELLIGENCE</p><h2 id="cfAiHeading">Your AI Study Companion ✨</h2><p>Ask questions, turn notes into revision material, and create a realistic study plan. The AI model responds through a secure server when configured.</p></div>
+    <div class="cf-ai-status" id="cfAiStatus"><span class="cf-ai-dot"></span><span id="cfAiStatusText">Checking AI connection…</span></div>
+  </div>
+  <div class="cf-ai-grid">
+    <article class="cf-ai-card">
+      <h3>💬 Chat with CampusFlow AI</h3><p class="cf-ai-sub">Ask about Java, DSA, DBMS, assignments, concepts, or study strategy.</p>
+      <div class="cf-ai-chips"><button type="button" class="cf-ai-chip" data-cf-prompt="Explain Java inheritance in simple Hinglish with a small example.">Explain a concept</button><button type="button" class="cf-ai-chip" data-cf-prompt="Help me make a realistic study plan for today.">Plan my day</button><button type="button" class="cf-ai-chip" data-cf-prompt="Give me 5 beginner-friendly DSA practice questions with hints.">Practice DSA</button></div>
+      <div class="cf-ai-chatlog" id="cfAiChatLog" aria-live="polite"><div class="cf-ai-msg bot">Hi! I’m CampusFlow AI 🌷 Ask me a question or choose a quick action.</div></div>
+      <form id="cfAiChatForm"><div class="cf-ai-chatrow"><input class="cf-ai-input" id="cfAiMessage" maxlength="12000" placeholder="Ask your study question…" autocomplete="off" required><button class="cf-ai-btn" id="cfAiSend" type="submit">Send ↗</button></div></form>
+      <details class="cf-ai-url"><summary>Advanced setup: AI server URL</summary><input class="cf-ai-input" id="cfAiBaseUrl" placeholder="https://your-backend.onrender.com"><button type="button" class="cf-ai-btn alt" id="cfAiSaveUrl">Save server URL</button><div class="cf-ai-note">If this site and the backend are hosted together, leave blank. For GitHub Pages, paste your deployed backend URL here. Do not paste an API key here.</div></details>
+    </article>
+    <article class="cf-ai-card">
+      <h3>🪄 AI Study Tools</h3><p class="cf-ai-sub">Turn your notes into useful revision material.</p>
+      <div class="cf-ai-field"><label for="cfAiNotes">Topic or notes</label><textarea class="cf-ai-input" id="cfAiNotes" rows="7" maxlength="14000" placeholder="Paste lecture notes, a topic, assignment details, or things you need to study…"></textarea></div>
+      <div class="cf-ai-planner-fields">
+        <div class="cf-ai-field"><label for="cfAiHours">Available study hours today</label><input class="cf-ai-input" id="cfAiHours" type="number" min="1" max="16" value="4" placeholder="e.g. 4"></div>
+        <div class="cf-ai-field"><label for="cfAiSubjects">Subjects to study</label><input class="cf-ai-input" id="cfAiSubjects" maxlength="500" placeholder="Java, DBMS, DSA"></div>
+        <div class="cf-ai-field"><label for="cfAiDeadline">Nearest deadline / exam</label><input class="cf-ai-input" id="cfAiDeadline" maxlength="300" placeholder="DBMS assignment tomorrow"></div>
+        <div class="cf-ai-field"><label for="cfAiPriority">Main priority</label><select class="cf-ai-input" id="cfAiPriority"><option value="Urgent deadlines">Urgent deadlines</option><option value="Difficult subjects">Difficult subjects</option><option value="Exam revision">Exam revision</option><option value="Balanced study">Balanced study</option></select></div>
+      </div>
+      <div class="cf-ai-tools"><button type="button" class="cf-ai-tool" data-cf-mode="summarize"><strong>📝 Summarize notes</strong><span>Overview, key concepts and revision points</span></button><button type="button" class="cf-ai-tool" data-cf-mode="quiz"><strong>❓ Generate a quiz</strong><span>MCQs and short answers with key</span></button><button type="button" class="cf-ai-tool" data-cf-mode="flashcards"><strong>🗂️ Make flashcards</strong><span>Question-and-answer revision cards</span></button><button type="button" class="cf-ai-tool" data-cf-mode="plan"><strong>🗓️ Build a study plan</strong><span>Personalized to your hours and deadlines</span></button><button type="button" class="cf-ai-tool" data-cf-mode="coach"><strong>🌱 Productivity coach</strong><span>Analyze pending assignments and priorities</span></button></div>
+      <div class="cf-ai-tools-status" id="cfAiToolStatus" aria-live="polite"></div><div class="cf-ai-output" id="cfAiToolOutput">Your generated summary, quiz, or plan will appear here.</div><button type="button" class="cf-ai-btn alt" id="cfAiCopyOutput">Copy result</button>
+      <p class="cf-ai-note">Privacy: only the question/notes and relevant task context are sent to your configured AI server. Avoid pasting passwords, personal IDs, or sensitive information.</p>
+    </article>
+  </div>
+</section>
+
 <footer>CampusFlow · A student assignment tracker prototype</footer>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -110,9 +137,7 @@
   </form>
 </div>
 
-
-<script src="script.js"></script>
-
+<script src="script.js" defer></script>
+<script src="ai.js" defer></script>
 </body>
 </html>
-
